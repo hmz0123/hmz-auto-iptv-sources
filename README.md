@@ -10,22 +10,22 @@
 
 * **TVBox 完整版配置接口（直播 + 点播二合一）**
   ```text
-  https://://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json
+  https://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json
   ```
 
 * **TVBox 纯直播源接口**
   ```text
-  https://://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt
+  https://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt
   ```
 
 * **LibreTV 点播源订阅（新版 v2 格式）**
   ```text
-  https://://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/libre_vod.json
+  https://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/libre_vod.json
   ```
 
 * **LibreTV / 通用播放器直播源订阅（M3U 格式）**
   ```text
-  https://://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/libre_tv.m3u
+  https://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/libre_tv.m3u
   ```
 
 ---
