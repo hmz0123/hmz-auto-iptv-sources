@@ -7,7 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-GH_RAW = "https://" + "://githubusercontent.com"
+GH_RAW = "https://" + "raw.githubusercontent.com"
+GH_GIST = "https://" + "gist.githubusercontent.com"
 GH_IO = "https://" + "iptv-org.github.io"
 
 # 1. 上游直播源列表
@@ -18,31 +19,64 @@ LIVE_SOURCE_URLS = [
     GH_RAW + "/Kimentanm/aptv/master/m3u/iptv.m3u",
 ]
 
-# 2. 上游点播源列表（公开维护的 TVBox 仓库配置）
-VOD_SOURCE_URLS = [
-    GH_RAW + "/gaotianliuyun/gao/master/js.json",
-    GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
+# 2. 高频更新的 TVBox 聚合点播源
+TVBOX_VOD_URLS = [
+    GH_RAW + "/25175/tvyuan/main/tvbox.json",
+    GH_RAW + "/jinenge/tvbox/main/0.json",
     GH_RAW + "/yoursmile66/TVBox/main/XC.json",
+    GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
+    GH_RAW + "/gaotianliuyun/gao/master/0821.json",
 ]
 
-# 3. 公开 CMS 资源站采集接口（适配 LibreTV 与 TVBox 通用点播）
+# 3. 高频更新的 LibreTV 聚合源
+LIBRE_VOD_URLS = [
+    GH_RAW + "/wokaotianshi123/jgcj/main/libretv.json",
+    GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
+]
+
+# 4. 内置苹果 CMS 采集接口池（双端通用）
 CMS_API_LIST = [
     {"key": "ffzy", "name": "非凡影视", "api": "http://" + "://ffzyapi.com"},
     {"key": "lzzy", "name": "量子资源", "api": "https://" + "://lziapi.com"},
     {"key": "ikun", "name": "爱坤资源", "api": "https://" + "://ikunzyapi.com"},
     {"key": "bfzy", "name": "暴风资源", "api": "https://" + "://bfzyapi.com"},
     {"key": "tyys", "name": "天涯资源", "api": "https://" + "://tyyszy.com"},
+    {"key": "ryzy", "name": "如意资源", "api": "https://" + "://rycjapi.com"},
+    {"key": "hwba", "name": "华为吧资源", "api": "https://" + "cj.hwba.live/api.php/provide/vod/"},
+    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "://wolongzyw.com"},
+    {"key": "jisu", "name": "极速资源", "api": "https://" + "://jszyapi.com"},
+    {"key": "modu", "name": "魔都资源", "api": "https://" + "://mdzyapi.com"},
+    {"key": "subo", "name": "速博资源", "api": "https://" + "://subocaiji.com"},
+    {"key": "xinlang", "name": "新浪资源", "api": "https://" + "://xinlangapi.com"},
+    {"key": "guangsu", "name": "光速资源", "api": "https://" + "://guangsuapi.com"},
+    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "://hongniuzy2.com"},
+    {"key": "jinying", "name": "金鹰资源", "api": "https://" + "://jinyingzy.com"},
+    {"key": "sdzy", "name": "闪电资源", "api": "https://" + "://sdzyapi.com"},
+    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "://apiyhzy.com"},
+    {"key": "wujin", "name": "无尽资源", "api": "https://" + "api.wujinapi.me/api.php/provide/vod/"},
+    {"key": "dbzy", "name": "豆瓣资源", "api": "https://" + "dbzy.tv/api.php/provide/vod/"},
+    {"key": "dytt", "name": "电影天堂", "api": "http://" + "://dyttzyapi.com"},
 ]
 
 TIMEOUT = 6
 MAX_WORKERS = 30
-HEADERS = {"User-Agent": "okhttp/3.15"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
 
 
 def fetch_url_text(url, timeout=15):
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8", errors="ignore")
+
+
+def clean_json_text(raw_text):
+    """清理 TVBox 配置中常见的注释和尾部多余逗号"""
+    text = re.sub(r"^\s*//.*$", "", raw_text, flags=re.MULTILINE)
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    return text
 
 
 def parse_live_content(content):
@@ -65,11 +99,11 @@ def parse_live_content(content):
             current_info = {}
         elif "," in line and "http" in line and not line.startswith("#"):
             parts = line.split(",", 1)
-            if len(parts) == 2 and parts.strip().startswith("http"):
+            if len(parts) == 2 and parts[1].strip().startswith("http"):
                 parsed.append({
-                    "name": parts.strip(),
+                    "name": parts[0].strip(),
                     "group": "精选频道",
-                    "url": parts.strip(),
+                    "url": parts[1].strip(),
                 })
     return parsed
 
@@ -80,7 +114,7 @@ def test_live_speed(channel):
         return None
     start_time = time.time()
     try:
-        req = urllib.request.Request(url, headers=HEADERS)
+        req = urllib.request.Request(url, headers={"User-Agent": "okhttp/3.15"})
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             if resp.status in (200, 206, 301, 302):
                 if len(resp.read(512)) > 0:
@@ -92,13 +126,13 @@ def test_live_speed(channel):
 
 
 def test_cms_api(site):
-    """测试点播 CMS 接口响应速度与可用性"""
+    """测试点播 CMS 接口连通性"""
     start_time = time.time()
     try:
-        test_url = site["api"] + "?ac=list&pg=1"
+        sep = "&" if "?" in site["api"] else "?"
+        test_url = f"{site['api']}{sep}ac=list&pg=1"
         text = fetch_url_text(test_url, timeout=TIMEOUT)
-        data = json.loads(text)
-        if "list" in data or "class" in data:
+        if '"list"' in text or '"class"' in text or "<rss" in text:
             site["latency"] = round((time.time() - start_time) * 1000)
             return site
     except Exception:
@@ -106,32 +140,79 @@ def test_cms_api(site):
     return None
 
 
-def fetch_tvbox_vod():
-    """抓取上游 TVBox 点播配置（爬虫、站点、解析）"""
-    for url in VOD_SOURCE_URLS:
+def collect_all_vod():
+    """收集并合并所有上游点播配置"""
+    merged_cms = {item["api"]: dict(item) for item in CMS_API_LIST}
+    tvbox_base = {}
+    all_tvbox_sites = []
+    all_parses = []
+
+    # 1. 抓取 LibreTV 上游源
+    for url in LIBRE_VOD_URLS:
         try:
-            raw_text = fetch_url_text(url, timeout=15)
-            # 去除 JSON 中的单行注释
-            clean_text = re.sub(r"^\s*//.*$", "", raw_text, flags=re.MULTILINE)
-            data = json.loads(clean_text)
-            if "sites" in data and len(data["sites"]) > 0:
-                print(f"成功获取 TVBox 点播源: {url}，包含 {len(data['sites'])} 个点播站点")
-                return data
+            data = json.loads(clean_json_text(fetch_url_text(url)))
+            # 兼容 v2 sources 数组格式
+            if isinstance(data.get("sources"), list):
+                for s in data["sources"]:
+                    api = s.get("api", "").strip()
+                    if api and api not in merged_cms:
+                        merged_cms[api] = {
+                            "key": s.get("id") or f"src_{len(merged_cms)}",
+                            "name": s.get("name", "聚合资源"),
+                            "api": api,
+                            "isAdult": s.get("isAdult", False),
+                        }
+            # 兼容旧版 api_site 字典格式
+            elif isinstance(data.get("api_site"), dict):
+                for k, v in data["api_site"].items():
+                    api = v.get("api", "").strip()
+                    if api and api not in merged_cms:
+                        merged_cms[api] = {
+                            "key": k,
+                            "name": v.get("name", k),
+                            "api": api,
+                        }
+            print(f"成功解析 LibreTV 源: {url}")
         except Exception as e:
-            print(f"获取点播源失败 {url}: {e}")
-    return {}
+            print(f"LibreTV 源跳过 {url}: {e}")
+
+    # 2. 抓取 TVBox 上游源
+    for url in TVBOX_VOD_URLS:
+        try:
+            data = json.loads(clean_json_text(fetch_url_text(url)))
+            sites = data.get("sites", [])
+            if sites:
+                print(f"成功解析 TVBox 源: {url} ({len(sites)} 个站点)")
+                if not tvbox_base and data.get("spider"):
+                    tvbox_base = data
+                for s in sites:
+                    # 提取其中的苹果 CMS 接口放入通用池
+                    if s.get("type") in (0, 1) and str(s.get("api", "")).startswith("http"):
+                        api = s["api"].strip()
+                        if api not in merged_cms:
+                            merged_cms[api] = {
+                                "key": s.get("key") or f"tv_{len(merged_cms)}",
+                                "name": s.get("name", "TVBox站点"),
+                                "api": api,
+                            }
+                    else:
+                        all_tvbox_sites.append(s)
+                all_parses.extend(data.get("parses", []))
+        except Exception as e:
+            print(f"TVBox 源跳过 {url}: {e}")
+
+    return list(merged_cms.values()), tvbox_base, all_tvbox_sites, all_parses
 
 
 def main():
-    # --- 阶段一：处理直播源 ---
-    print("1. 开始抓取并测速直播源...")
+    # --- 阶段一：抓取并测速直播源 ---
+    print("1. 开始处理直播源...")
     raw_channels = []
     for url in LIVE_SOURCE_URLS:
         try:
-            content = fetch_url_text(url)
-            raw_channels.extend(parse_live_content(content))
+            raw_channels.extend(parse_live_content(fetch_url_text(url)))
         except Exception as e:
-            print(f"直播源获取失败 {url}: {e}")
+            print(f"直播源失败 {url}: {e}")
 
     unique_channels = list({ch["url"]: ch for ch in raw_channels}.values())
     valid_channels = []
@@ -141,16 +222,14 @@ def main():
                 valid_channels.append(res)
 
     valid_channels.sort(key=lambda x: x["latency"])
-    if len(valid_channels) < 10 and len(unique_channels) > 0:
+    if len(valid_channels) < 10 and unique_channels:
         valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
 
-    # 保存 LibreTV 直播 M3U
     with open("libre_tv.m3u", "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         for ch in valid_channels:
             f.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
 
-    # 保存 TVBox 直播 TXT
     groups = {}
     for ch in valid_channels:
         groups.setdefault(ch["group"], []).append(ch)
@@ -161,69 +240,9 @@ def main():
                 f.write(f"{ch['name']},{ch['url']}\n")
             f.write("\n")
 
-    # --- 阶段二：处理点播源 ---
-    print("2. 开始测速 CMS 点播接口并合并 TVBox 点播源...")
+    # --- 阶段二：抓取并测速点播源 ---
+    print("2. 开始处理点播源...")
+    cms_pool, tvbox_base, extra_tvbox_sites, extra_parses = collect_all_vod()
+    print(f"共收集到 {len(cms_pool)} 个 CMS 点播接口，开始并发测速...")
+
     valid_cms = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for res in executor.map(test_cms_api, CMS_API_LIST):
-            if res:
-                valid_cms.append(res)
-    valid_cms.sort(key=lambda x: x["latency"])
-    print(f"有效 CMS 点播接口共 {len(valid_cms)} 个")
-
-    # 生成 LibreTV 专用点播配置 (libre_vod.json)
-    libre_vod_data = {
-        "cache_time": 7200,
-        "api_site": {
-            item["key"]: {"api": item["api"], "name": item["name"]}
-            for item in valid_cms
-        },
-    }
-    with open("libre_vod.json", "w", encoding="utf-8") as f:
-        json.dump(libre_vod_data, f, ensure_ascii=False, indent=2)
-
-    # 合并生成 TVBox 完整版配置（点播 + 测速直播）
-    vod_config = fetch_tvbox_vod()
-    cms_sites_for_tvbox = [
-        {
-            "key": item["key"],
-            "name": f"⚡{item['name']}({item['latency']}ms)",
-            "type": 1,
-            "api": item["api"],
-            "searchable": 1,
-            "quickSearch": 1,
-            "filterable": 1,
-        }
-        for item in valid_cms
-    ]
-
-    live_url = GH_RAW + "/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt"
-    wallpaper_url = "https://" + "tuapi.eees.cc/api.php?category=fengjing&type=302"
-
-    final_tvbox = {
-        "spider": vod_config.get("spider", ""),
-        "wallpaper": vod_config.get("wallpaper", wallpaper_url),
-        "lives": [
-            {
-                "name": "自动测速精选直播",
-                "type": 0,
-                "url": live_url,
-                "playerType": 1,
-                "ua": "okhttp/3.15",
-            }
-        ],
-        "sites": cms_sites_for_tvbox + vod_config.get("sites", []),
-        "parses": vod_config.get("parses", []),
-        "flags": vod_config.get("flags", []),
-        "ijk": vod_config.get("ijk", []),
-        "ads": vod_config.get("ads", []),
-    }
-
-    with open("tvbox.json", "w", encoding="utf-8") as f:
-        json.dump(final_tvbox, f, ensure_ascii=False, indent=2)
-
-    print("全部更新完成！")
-
-
-if __name__ == "__main__":
-    main()
