@@ -27,5 +27,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@://github.com"
           git config --local user.name "github-actions[bot]"
+          git pull --rebase origin main || true
           git add libre_tv.m3u libre_vod.json tvbox_live.txt tvbox.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: 自动更新测速视频源" && git push)
