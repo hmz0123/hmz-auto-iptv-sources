@@ -97,7 +97,7 @@ def parse_live_content(content):
             current_info["url"] = line
             parsed.append(current_info)
             current_info = {}
-        elif "," in line and "http" in line and not line.startswith("#"):
+                elif "," in line and "http" in line and not line.startswith("#"):
             parts = line.split(",", 1)
             if len(parts) == 2 and parts[1].strip().startswith("http"):
                 parsed.append({
@@ -226,8 +226,8 @@ def main():
         valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
 
     with open("libre_tv.m3u", "w", encoding="utf-8") as f:
-        f.write("#EXTM3U\n")
-        for ch in valid_channels:
+        f.write(f"#EXTM3U # Updated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    for ch in valid_channels:
             f.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
 
     groups = {}
