@@ -199,7 +199,7 @@ def collect_all_vod():
 
 
 def main():
-    update_tag = time.strftime("%Y-%m-%d %H:%M:%S")
+    update_tag = time.strftime("%Y-%m-%d %H:%M:%S UTC")
     print(f"1. 开始处理直播源 ({update_tag})...")
     raw_channels = []
     for url in LIVE_SOURCE_URLS:
@@ -215,9 +215,11 @@ def main():
             if res:
                 valid_channels.append(res)
 
-    valid_channels.sort(key=lambda x: x["latency"])
+    valid_channels.sort(key=lambda x: x.get("latency", 999))
     if len(valid_channels) < 10 and unique_channels:
         valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
+        for ch in valid_channels:
+            ch.setdefault("latency", 999)
 
     with open("libre_tv.m3u", "w", encoding="utf-8") as f:
         f.write(f"#EXTM3U # Updated: {update_tag}\n")
@@ -228,6 +230,7 @@ def main():
     for ch in valid_channels:
         groups.setdefault(ch["group"], []).append(ch)
     with open("tvbox_live.txt", "w", encoding="utf-8") as f:
+        f.write(f"更新时间: {update_tag},#genre#\n\n")
         for group_name, ch_list in groups.items():
             f.write(f"{group_name},#genre#\n")
             for ch in ch_list:
@@ -240,7 +243,3 @@ def main():
 
     valid_cms = []
     with ThreadPoolExecutor(max_workers=20) as executor:
-        for res in executor.map(test_cms_api, cms_pool):
-            if res:
-                valid_cms.append(res)
-
