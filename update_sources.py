@@ -11,7 +11,6 @@ GH_RAW = "https://" + "raw.githubusercontent.com"
 GH_GIST = "https://" + "gist.githubusercontent.com"
 GH_IO = "https://" + "iptv-org.github.io"
 
-# 1. 上游直播源列表
 LIVE_SOURCE_URLS = [
     GH_IO + "/iptv/languages/zho.m3u",
     GH_RAW + "/Guovin/iptv-api/gd/output/result.m3u",
@@ -19,7 +18,6 @@ LIVE_SOURCE_URLS = [
     GH_RAW + "/Kimentanm/aptv/master/m3u/iptv.m3u",
 ]
 
-# 2. 高频更新的 TVBox 聚合点播源
 TVBOX_VOD_URLS = [
     GH_RAW + "/25175/tvyuan/main/tvbox.json",
     GH_RAW + "/jinenge/tvbox/main/0.json",
@@ -28,13 +26,11 @@ TVBOX_VOD_URLS = [
     GH_RAW + "/gaotianliuyun/gao/master/0821.json",
 ]
 
-# 3. 高频更新的 LibreTV 聚合源
 LIBRE_VOD_URLS = [
     GH_RAW + "/wokaotianshi123/jgcj/main/libretv.json",
     GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
 ]
 
-# 4. 内置苹果 CMS 采集接口池（双端通用）
 CMS_API_LIST = [
     {"key": "ffzy", "name": "非凡影视", "api": "http://" + "://ffzyapi.com"},
     {"key": "lzzy", "name": "量子资源", "api": "https://" + "://lziapi.com"},
@@ -60,9 +56,7 @@ CMS_API_LIST = [
 
 TIMEOUT = 6
 MAX_WORKERS = 30
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-}
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 
 def fetch_url_text(url, timeout=15):
@@ -101,11 +95,7 @@ def parse_live_content(content):
             ch_name = ch_name.strip()
             ch_url = ch_url.strip()
             if ch_url.startswith("http"):
-                parsed.append({
-                    "name": ch_name,
-                    "group": "精选频道",
-                    "url": ch_url,
-                })
+                parsed.append({"name": ch_name, "group": "精选频道", "url": ch_url})
     return parsed
 
 
@@ -138,6 +128,18 @@ def test_cms_api(site):
     except Exception:
         pass
     return None
+
+
+def run_parallel(func, items, workers=20):
+    results = []
+    executor = ThreadPoolExecutor(max_workers=workers)
+    try:
+        for res in executor.map(func, items):
+            if res:
+                results.append(res)
+    finally:
+        executor.shutdown(wait=True)
+    return results
 
 
 def collect_all_vod():
@@ -209,13 +211,9 @@ def main():
             print(f"直播源失败 {url}: {e}")
 
     unique_channels = list({ch["url"]: ch for ch in raw_channels}.values())
-    valid_channels = []
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        for res in executor.map(test_live_speed, unique_channels):
-            if res:
-                valid_channels.append(res)
-
+    valid_channels = run_parallel(test_live_speed, unique_channels, MAX_WORKERS)
     valid_channels.sort(key=lambda x: x.get("latency", 999))
+
     if len(valid_channels) < 10 and unique_channels:
         valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
         for ch in valid_channels:
@@ -241,5 +239,4 @@ def main():
     cms_pool, tvbox_base, extra_tvbox_sites, extra_parses = collect_all_vod()
     print(f"共收集到 {len(cms_pool)} 个 CMS 点播接口，开始并发测速...")
 
-    valid_cms = []
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    valid_cms = run_parallel(test_cms_api, cms_pool, 20)
