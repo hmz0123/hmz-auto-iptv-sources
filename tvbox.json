@@ -1,11 +1,11 @@
 {
   "spider": "",
-  "wallpaper": "https://eees.cc",
+  "wallpaper": "https://tuapi.eees.cc/api.php?category=fengjing&type=302",
   "lives": [
     {
       "name": "自动测速精选直播",
       "type": 0,
-      "url": "./tvbox_live.txt",
+      "url": "https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt",
       "playerType": 1,
       "ua": "okhttp/3.15"
     }
