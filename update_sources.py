@@ -31,27 +31,29 @@ LIBRE_VOD_URLS = [
     GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
 ]
 
+API_PATH = "/api.php/provide/vod/"
+
 CMS_API_LIST = [
-    {"key": "ffzy", "name": "非凡影视", "api": "http://" + "://ffzyapi.com"},
-    {"key": "lzzy", "name": "量子资源", "api": "https://" + "://lziapi.com"},
-    {"key": "ikun", "name": "爱坤资源", "api": "https://" + "://ikunzyapi.com"},
-    {"key": "bfzy", "name": "暴风资源", "api": "https://" + "://bfzyapi.com"},
-    {"key": "tyys", "name": "天涯资源", "api": "https://" + "://tyyszy.com"},
-    {"key": "ryzy", "name": "如意资源", "api": "https://" + "://rycjapi.com"},
-    {"key": "hwba", "name": "华为吧资源", "api": "https://" + "cj.hwba.live/api.php/provide/vod/"},
-    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "://wolongzyw.com"},
-    {"key": "jisu", "name": "极速资源", "api": "https://" + "://jszyapi.com"},
-    {"key": "modu", "name": "魔都资源", "api": "https://" + "://mdzyapi.com"},
-    {"key": "subo", "name": "速博资源", "api": "https://" + "://subocaiji.com"},
+    {"key": "ffzy", "name": "非凡影视", "api": "http://" + "cj.ffzyapi.com" + API_PATH},
+    {"key": "lzzy", "name": "量子资源", "api": "https://" + "cj.lziapi.com" + API_PATH},
+    {"key": "ikun", "name": "爱坤资源", "api": "https://" + "ikunzyapi.com" + API_PATH},
+    {"key": "bfzy", "name": "暴风资源", "api": "https://" + "bfzyapi.com" + API_PATH},
+    {"key": "tyys", "name": "天涯资源", "api": "https://" + "tyyszy.com" + API_PATH},
+    {"key": "ryzy", "name": "如意资源", "api": "https://" + "cj.rycjapi.com" + API_PATH},
+    {"key": "hwba", "name": "华为吧资源", "api": "https://" + "cj.hwba.live" + API_PATH},
+    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "collect.wolongzyw.com" + API_PATH},
+    {"key": "jisu", "name": "极速资源", "api": "https://" + "jszyapi.com" + API_PATH},
+    {"key": "modu", "name": "魔都资源", "api": "https://" + "www.mdzyapi.com" + API_PATH},
+    {"key": "subo", "name": "速博资源", "api": "https://" + "subocaiji.com" + API_PATH},
     {"key": "xinlang", "name": "新浪资源", "api": "https://" + "://xinlangapi.com"},
-    {"key": "guangsu", "name": "光速资源", "api": "https://" + "://guangsuapi.com"},
-    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "://hongniuzy2.com"},
-    {"key": "jinying", "name": "金鹰资源", "api": "https://" + "://jinyingzy.com"},
-    {"key": "sdzy", "name": "闪电资源", "api": "https://" + "://sdzyapi.com"},
-    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "://apiyhzy.com"},
-    {"key": "wujin", "name": "无尽资源", "api": "https://" + "api.wujinapi.me/api.php/provide/vod/"},
-    {"key": "dbzy", "name": "豆瓣资源", "api": "https://" + "dbzy.tv/api.php/provide/vod/"},
-    {"key": "dytt", "name": "电影天堂", "api": "http://" + "://dyttzyapi.com"},
+    {"key": "guangsu", "name": "光速资源", "api": "https://" + "api.guangsuapi.com" + API_PATH},
+    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "www.hongniuzy2.com" + API_PATH},
+    {"key": "jinying", "name": "金鹰资源", "api": "https://" + "jinyingzy.com" + API_PATH},
+    {"key": "sdzy", "name": "闪电资源", "api": "https://" + "sdzyapi.com" + API_PATH},
+    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "m3u8.apiyhzy.com" + API_PATH},
+    {"key": "wujin", "name": "无尽资源", "api": "https://" + "api.wujinapi.me" + API_PATH},
+    {"key": "dbzy", "name": "豆瓣资源", "api": "https://" + "dbzy.tv" + API_PATH},
+    {"key": "dytt", "name": "电影天堂", "api": "http://" + "caiji.dyttzyapi.com" + API_PATH},
 ]
 
 TIMEOUT = 6
