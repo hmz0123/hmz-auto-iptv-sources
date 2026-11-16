@@ -72,7 +72,6 @@ def fetch_url_text(url, timeout=15):
 
 
 def clean_json_text(raw_text):
-    """清理 TVBox 配置中常见的注释和尾部多余逗号"""
     text = re.sub(r"^\s*//.*$", "", raw_text, flags=re.MULTILINE)
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
     text = re.sub(r",\s*([}\]])", r"\1", text)
@@ -97,13 +96,15 @@ def parse_live_content(content):
             current_info["url"] = line
             parsed.append(current_info)
             current_info = {}
-                elif "," in line and "http" in line and not line.startswith("#"):
-            parts = line.split(",", 1)
-            if len(parts) == 2 and parts[1].strip().startswith("http"):
+        elif "," in line and "http" in line and not line.startswith("#"):
+            ch_name, ch_url = line.split(",", 1)
+            ch_name = ch_name.strip()
+            ch_url = ch_url.strip()
+            if ch_url.startswith("http"):
                 parsed.append({
-                    "name": parts[0].strip(),
+                    "name": ch_name,
                     "group": "精选频道",
-                    "url": parts[1].strip(),
+                    "url": ch_url,
                 })
     return parsed
 
@@ -126,7 +127,6 @@ def test_live_speed(channel):
 
 
 def test_cms_api(site):
-    """测试点播 CMS 接口连通性"""
     start_time = time.time()
     try:
         sep = "&" if "?" in site["api"] else "?"
@@ -141,17 +141,14 @@ def test_cms_api(site):
 
 
 def collect_all_vod():
-    """收集并合并所有上游点播配置"""
     merged_cms = {item["api"]: dict(item) for item in CMS_API_LIST}
     tvbox_base = {}
     all_tvbox_sites = []
     all_parses = []
 
-    # 1. 抓取 LibreTV 上游源
     for url in LIBRE_VOD_URLS:
         try:
             data = json.loads(clean_json_text(fetch_url_text(url)))
-            # 兼容 v2 sources 数组格式
             if isinstance(data.get("sources"), list):
                 for s in data["sources"]:
                     api = s.get("api", "").strip()
@@ -162,7 +159,6 @@ def collect_all_vod():
                             "api": api,
                             "isAdult": s.get("isAdult", False),
                         }
-            # 兼容旧版 api_site 字典格式
             elif isinstance(data.get("api_site"), dict):
                 for k, v in data["api_site"].items():
                     api = v.get("api", "").strip()
@@ -176,7 +172,6 @@ def collect_all_vod():
         except Exception as e:
             print(f"LibreTV 源跳过 {url}: {e}")
 
-    # 2. 抓取 TVBox 上游源
     for url in TVBOX_VOD_URLS:
         try:
             data = json.loads(clean_json_text(fetch_url_text(url)))
@@ -186,7 +181,6 @@ def collect_all_vod():
                 if not tvbox_base and data.get("spider"):
                     tvbox_base = data
                 for s in sites:
-                    # 提取其中的苹果 CMS 接口放入通用池
                     if s.get("type") in (0, 1) and str(s.get("api", "")).startswith("http"):
                         api = s["api"].strip()
                         if api not in merged_cms:
@@ -205,8 +199,8 @@ def collect_all_vod():
 
 
 def main():
-    # --- 阶段一：抓取并测速直播源 ---
-    print("1. 开始处理直播源...")
+    update_tag = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"1. 开始处理直播源 ({update_tag})...")
     raw_channels = []
     for url in LIVE_SOURCE_URLS:
         try:
@@ -226,8 +220,8 @@ def main():
         valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
 
     with open("libre_tv.m3u", "w", encoding="utf-8") as f:
-        f.write(f"#EXTM3U # Updated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    for ch in valid_channels:
+        f.write(f"#EXTM3U # Updated: {update_tag}\n")
+        for ch in valid_channels:
             f.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
 
     groups = {}
@@ -240,9 +234,13 @@ def main():
                 f.write(f"{ch['name']},{ch['url']}\n")
             f.write("\n")
 
-    # --- 阶段二：抓取并测速点播源 ---
     print("2. 开始处理点播源...")
     cms_pool, tvbox_base, extra_tvbox_sites, extra_parses = collect_all_vod()
     print(f"共收集到 {len(cms_pool)} 个 CMS 点播接口，开始并发测速...")
 
     valid_cms = []
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        for res in executor.map(test_cms_api, cms_pool):
+            if res:
+                valid_cms.append(res)
+
