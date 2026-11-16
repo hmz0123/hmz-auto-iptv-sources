@@ -61,8 +61,10 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 def fetch_url_text(url, timeout=15):
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.read().decode("utf-8", errors="ignore")
+    resp = urllib.request.urlopen(req, timeout=timeout)
+    data = resp.read().decode("utf-8", errors="ignore")
+    resp.close()
+    return data
 
 
 def clean_json_text(raw_text):
@@ -106,11 +108,13 @@ def test_live_speed(channel):
     start_time = time.time()
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "okhttp/3.15"})
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            if resp.status in (200, 206, 301, 302):
-                if len(resp.read(512)) > 0:
-                    channel["latency"] = round((time.time() - start_time) * 1000)
-                    return channel
+        resp = urllib.request.urlopen(req, timeout=TIMEOUT)
+        status = resp.status
+        chunk = resp.read(512)
+        resp.close()
+        if status in (200, 206, 301, 302) and len(chunk) > 0:
+            channel["latency"] = round((time.time() - start_time) * 1000)
+            return channel
     except Exception:
         pass
     return None
@@ -219,24 +223,25 @@ def main():
         for ch in valid_channels:
             ch.setdefault("latency", 999)
 
-    with open("libre_tv.m3u", "w", encoding="utf-8") as f:
-        f.write(f"#EXTM3U # Updated: {update_tag}\n")
-        for ch in valid_channels:
-            f.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
+    f_m3u = open("libre_tv.m3u", "w", encoding="utf-8")
+    f_m3u.write(f"#EXTM3U # Updated: {update_tag}\n")
+    for ch in valid_channels:
+        f_m3u.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
+    f_m3u.close()
 
     groups = {}
     for ch in valid_channels:
         groups.setdefault(ch["group"], []).append(ch)
-    with open("tvbox_live.txt", "w", encoding="utf-8") as f:
-        f.write(f"更新时间: {update_tag},#genre#\n\n")
-        for group_name, ch_list in groups.items():
-            f.write(f"{group_name},#genre#\n")
-            for ch in ch_list:
-                f.write(f"{ch['name']},{ch['url']}\n")
-            f.write("\n")
+    f_txt = open("tvbox_live.txt", "w", encoding="utf-8")
+    f_txt.write(f"更新时间: {update_tag},#genre#\n\n")
+    for group_name, ch_list in groups.items():
+        f_txt.write(f"{group_name},#genre#\n")
+        for ch in ch_list:
+            f_txt.write(f"{ch['name']},{ch['url']}\n")
+        f_txt.write("\n")
+    f_txt.close()
 
     print("2. 开始处理点播源...")
     cms_pool, tvbox_base, extra_tvbox_sites, extra_parses = collect_all_vod()
     print(f"共收集到 {len(cms_pool)} 个 CMS 点播接口，开始并发测速...")
 
-    valid_cms = run_parallel(test_cms_api, cms_pool, 20)
