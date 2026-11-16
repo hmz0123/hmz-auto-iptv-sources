@@ -10,12 +10,13 @@ ssl._create_default_https_context = ssl._create_unverified_context
 GH_RAW = "https://" + "raw.githubusercontent.com"
 GH_GIST = "https://" + "gist.githubusercontent.com"
 GH_IO = "https://" + "iptv-org.github.io"
+API_PATH = "/api.php/provide/vod/"
 
 LIVE_SOURCE_URLS = [
-    GH_IO + "/iptv/languages/zho.m3u",
     GH_RAW + "/Guovin/iptv-api/gd/output/result.m3u",
     GH_RAW + "/vbskycn/iptv/master/tv/iptv4.m3u",
     GH_RAW + "/Kimentanm/aptv/master/m3u/iptv.m3u",
+    GH_IO + "/iptv/languages/zho.m3u",
 ]
 
 TVBOX_VOD_URLS = [
@@ -23,7 +24,6 @@ TVBOX_VOD_URLS = [
     GH_RAW + "/jinenge/tvbox/main/0.json",
     GH_RAW + "/yoursmile66/TVBox/main/XC.json",
     GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
-    GH_RAW + "/gaotianliuyun/gao/master/0821.json",
 ]
 
 LIBRE_VOD_URLS = [
@@ -31,29 +31,27 @@ LIBRE_VOD_URLS = [
     GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
 ]
 
-API_PATH = "/api.php/provide/vod/"
-
 CMS_API_LIST = [
-    {"key": "ffzy", "name": "非凡影视", "api": "http://" + "cj.ffzyapi.com" + API_PATH},
-    {"key": "lzzy", "name": "量子资源", "api": "https://" + "cj.lziapi.com" + API_PATH},
+    {"key": "ffzy", "name": "非凡影视", "api": "http://" + "://ffzyapi.com" + API_PATH},
+    {"key": "lzzy", "name": "量子资源", "api": "https://" + "://lziapi.com" + API_PATH},
     {"key": "ikun", "name": "爱坤资源", "api": "https://" + "ikunzyapi.com" + API_PATH},
     {"key": "bfzy", "name": "暴风资源", "api": "https://" + "bfzyapi.com" + API_PATH},
     {"key": "tyys", "name": "天涯资源", "api": "https://" + "tyyszy.com" + API_PATH},
-    {"key": "ryzy", "name": "如意资源", "api": "https://" + "cj.rycjapi.com" + API_PATH},
+    {"key": "ryzy", "name": "如意资源", "api": "https://" + "://rycjapi.com" + API_PATH},
     {"key": "hwba", "name": "华为吧资源", "api": "https://" + "cj.hwba.live" + API_PATH},
-    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "collect.wolongzyw.com" + API_PATH},
+    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "://wolongzyw.com" + API_PATH},
     {"key": "jisu", "name": "极速资源", "api": "https://" + "jszyapi.com" + API_PATH},
-    {"key": "modu", "name": "魔都资源", "api": "https://" + "www.mdzyapi.com" + API_PATH},
+    {"key": "modu", "name": "魔都资源", "api": "https://" + "://mdzyapi.com" + API_PATH},
     {"key": "subo", "name": "速博资源", "api": "https://" + "subocaiji.com" + API_PATH},
     {"key": "xinlang", "name": "新浪资源", "api": "https://" + "://xinlangapi.com"},
-    {"key": "guangsu", "name": "光速资源", "api": "https://" + "api.guangsuapi.com" + API_PATH},
-    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "www.hongniuzy2.com" + API_PATH},
+    {"key": "guangsu", "name": "光速资源", "api": "https://" + "://guangsuapi.com" + API_PATH},
+    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "://hongniuzy2.com" + API_PATH},
     {"key": "jinying", "name": "金鹰资源", "api": "https://" + "jinyingzy.com" + API_PATH},
     {"key": "sdzy", "name": "闪电资源", "api": "https://" + "sdzyapi.com" + API_PATH},
-    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "m3u8.apiyhzy.com" + API_PATH},
+    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "://apiyhzy.com" + API_PATH},
     {"key": "wujin", "name": "无尽资源", "api": "https://" + "api.wujinapi.me" + API_PATH},
     {"key": "dbzy", "name": "豆瓣资源", "api": "https://" + "dbzy.tv" + API_PATH},
-    {"key": "dytt", "name": "电影天堂", "api": "http://" + "caiji.dyttzyapi.com" + API_PATH},
+    {"key": "dytt", "name": "电影天堂", "api": "http://" + "://dyttzyapi.com" + API_PATH},
 ]
 
 TIMEOUT = 6
@@ -76,6 +74,13 @@ def clean_json_text(raw_text):
     return text
 
 
+def is_chinese_channel(name):
+    if re.search(r"[\u4e00-\u9fff]", name):
+        return True
+    upper = name.upper()
+    return "CCTV" in upper or "CGTN" in upper
+
+
 def parse_live_content(content):
     lines = content.splitlines()
     parsed = []
@@ -91,17 +96,16 @@ def parse_live_content(content):
             group = group_match.group(1).strip() if group_match else "综合频道"
             current_info = {"name": name, "group": group}
         elif line.startswith("http") and current_info:
-            current_info["url"] = line
-            parsed.append(current_info)
+            if is_chinese_channel(current_info["name"]):
+                current_info["url"] = line
+                parsed.append(current_info)
             current_info = {}
         elif "," in line and "http" in line and not line.startswith("#"):
             ch_name, ch_url = line.split(",", 1)
-            ch_name = ch_name.strip()
-            ch_url = ch_url.strip()
-            if ch_url.startswith("http"):
-                parsed.append({"name": ch_name, "group": "精选频道", "url": ch_url})
+            ch_name, ch_url = ch_name.strip(), ch_url.strip()
+            if ch_url.startswith("http") and is_chinese_channel(ch_name):
+                parsed.append({"name": ch_name, "group": "精选中文频道", "url": ch_url})
     return parsed
-
 
 def test_live_speed(channel):
     url = channel["url"]
@@ -111,8 +115,7 @@ def test_live_speed(channel):
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "okhttp/3.15"})
         resp = urllib.request.urlopen(req, timeout=TIMEOUT)
-        status = resp.status
-        chunk = resp.read(512)
+        status, chunk = resp.status, resp.read(512)
         resp.close()
         if status in (200, 206, 301, 302) and len(chunk) > 0:
             channel["latency"] = round((time.time() - start_time) * 1000)
@@ -126,8 +129,7 @@ def test_cms_api(site):
     start_time = time.time()
     try:
         sep = "&" if "?" in site["api"] else "?"
-        test_url = f"{site['api']}{sep}ac=list&pg=1"
-        text = fetch_url_text(test_url, timeout=TIMEOUT)
+        text = fetch_url_text(f"{site['api']}{sep}ac=list&pg=1", timeout=TIMEOUT)
         if '"list"' in text or '"class"' in text or "<rss" in text:
             site["latency"] = round((time.time() - start_time) * 1000)
             return site
@@ -147,103 +149,73 @@ def run_parallel(func, items, workers=20):
         executor.shutdown(wait=True)
     return results
 
-
 def collect_all_vod():
     merged_cms = {item["api"]: dict(item) for item in CMS_API_LIST}
-    tvbox_base = {}
-    all_tvbox_sites = []
-    all_parses = []
-
+    tvbox_base, extra_sites, all_parses = {}, [], []
     for url in LIBRE_VOD_URLS:
         try:
             data = json.loads(clean_json_text(fetch_url_text(url)))
-            if isinstance(data.get("sources"), list):
-                for s in data["sources"]:
-                    api = s.get("api", "").strip()
-                    if api and api not in merged_cms:
-                        merged_cms[api] = {
-                            "key": s.get("id") or f"src_{len(merged_cms)}",
-                            "name": s.get("name", "聚合资源"),
-                            "api": api,
-                            "isAdult": s.get("isAdult", False),
-                        }
-            elif isinstance(data.get("api_site"), dict):
-                for k, v in data["api_site"].items():
-                    api = v.get("api", "").strip()
-                    if api and api not in merged_cms:
-                        merged_cms[api] = {
-                            "key": k,
-                            "name": v.get("name", k),
-                            "api": api,
-                        }
-            print(f"成功解析 LibreTV 源: {url}")
-        except Exception as e:
-            print(f"LibreTV 源跳过 {url}: {e}")
-
+            items = data.get("sources") or [{"id": k, **v} for k, v in data.get("api_site", {}).items()]
+            for s in items:
+                api = s.get("api", "").strip()
+                if api and api not in merged_cms:
+                    merged_cms[api] = {"key": s.get("id") or f"s_{len(merged_cms)}", "name": s.get("name", "聚合源"), "api": api}
+        except Exception:
+            pass
     for url in TVBOX_VOD_URLS:
         try:
             data = json.loads(clean_json_text(fetch_url_text(url)))
-            sites = data.get("sites", [])
-            if sites:
-                print(f"成功解析 TVBox 源: {url} ({len(sites)} 个站点)")
-                if not tvbox_base and data.get("spider"):
-                    tvbox_base = data
-                for s in sites:
-                    if s.get("type") in (0, 1) and str(s.get("api", "")).startswith("http"):
-                        api = s["api"].strip()
-                        if api not in merged_cms:
-                            merged_cms[api] = {
-                                "key": s.get("key") or f"tv_{len(merged_cms)}",
-                                "name": s.get("name", "TVBox站点"),
-                                "api": api,
-                            }
-                    else:
-                        all_tvbox_sites.append(s)
-                all_parses.extend(data.get("parses", []))
-        except Exception as e:
-            print(f"TVBox 源跳过 {url}: {e}")
-
-    return list(merged_cms.values()), tvbox_base, all_tvbox_sites, all_parses
+            if not tvbox_base and data.get("spider"):
+                tvbox_base = data
+            for s in data.get("sites", []):
+                api = str(s.get("api", "")).strip()
+                if s.get("type") in (0, 1) and api.startswith("http") and api not in merged_cms:
+                    merged_cms[api] = {"key": s.get("key") or f"t_{len(merged_cms)}", "name": s.get("name", "TVBox站"), "api": api}
+                elif not api.startswith("http"):
+                    extra_sites.append(s)
+            all_parses.extend(data.get("parses", []))
+        except Exception:
+            pass
+    return list(merged_cms.values()), tvbox_base, extra_sites, all_parses
 
 
 def main():
-    update_tag = time.strftime("%Y-%m-%d %H:%M:%S UTC")
-    print(f"1. 开始处理直播源 ({update_tag})...")
-    raw_channels = []
-    for url in LIVE_SOURCE_URLS:
+    tag = time.strftime("%Y-%m-%d %H:%M:%S UTC")
+    raw_ch = []
+    for u in LIVE_SOURCE_URLS:
         try:
-            raw_channels.extend(parse_live_content(fetch_url_text(url)))
-        except Exception as e:
-            print(f"直播源失败 {url}: {e}")
-
-    unique_channels = list({ch["url"]: ch for ch in raw_channels}.values())
-    valid_channels = run_parallel(test_live_speed, unique_channels, MAX_WORKERS)
-    valid_channels.sort(key=lambda x: x.get("latency", 999))
-
-    if len(valid_channels) < 10 and unique_channels:
-        valid_channels = [ch for ch in unique_channels if "://[" not in ch["url"]][:200]
-        for ch in valid_channels:
-            ch.setdefault("latency", 999)
-
-    f_m3u = open("libre_tv.m3u", "w", encoding="utf-8")
-    f_m3u.write(f"#EXTM3U # Updated: {update_tag}\n")
-    for ch in valid_channels:
-        f_m3u.write(f'#EXTINF:-1 group-title="{ch["group"]}",{ch["name"]}\n{ch["url"]}\n')
-    f_m3u.close()
-
+            raw_ch.extend(parse_live_content(fetch_url_text(u)))
+        except Exception:
+            pass
+    uniq_ch = list({c["url"]: c for c in raw_ch}.values())
+    val_ch = sorted(run_parallel(test_live_speed, uniq_ch, MAX_WORKERS), key=lambda x: x.get("latency", 999))
+    if len(val_ch) < 10 and uniq_ch:
+        val_ch = [c for c in uniq_ch if "://[" not in c["url"]][:200]
+    with open("libre_tv.m3u", "w", encoding="utf-8") as f:
+        f.write(f"#EXTM3U # Updated: {tag}\n" + "".join(f'#EXTINF:-1 group-title="{c["group"]}",{c["name"]}\n{c["url"]}\n' for c in val_ch))
     groups = {}
-    for ch in valid_channels:
-        groups.setdefault(ch["group"], []).append(ch)
-    f_txt = open("tvbox_live.txt", "w", encoding="utf-8")
-    f_txt.write(f"更新时间: {update_tag},#genre#\n\n")
-    for group_name, ch_list in groups.items():
-        f_txt.write(f"{group_name},#genre#\n")
-        for ch in ch_list:
-            f_txt.write(f"{ch['name']},{ch['url']}\n")
-        f_txt.write("\n")
-    f_txt.close()
+    for c in val_ch:
+        groups.setdefault(c["group"], []).append(c)
+    with open("tvbox_live.txt", "w", encoding="utf-8") as f:
+        f.write(f"更新时间: {tag},#genre#\n\n" + "".join(f"{g},#genre#\n" + "".join(f"{c['name']},{c['url']}\n" for c in cl) + "\n" for g, cl in groups.items()))
+    cms_pool, tv_base, ex_sites, ex_parses = collect_all_vod()
+    val_cms = sorted(run_parallel(test_cms_api, cms_pool, 20), key=lambda x: x.get("latency", 888))
+    if len(val_cms) < 5:
+        for i in cms_pool[:30]:
+            i.setdefault("latency", 888)
+        val_cms = cms_pool[:30]
+    with open("libre_vod.json", "w", encoding="utf-8") as f:
+        json.dump({"version": 2, "updated_at": tag, "cache_time": 7200, "sources": [{"id": i["key"], "name": f"{i['name']} ({i.get('latency', 888)}ms)", "api": i["api"], "type": "cms"} for i in val_cms]}, f, ensure_ascii=False, indent=2)
+    cms_sites = [{"key": i["key"], "name": f"⚡{i['name']}({i.get('latency', 888)}ms)", "type": 1, "api": i["api"], "searchable": 1, "quickSearch": 1, "filterable": 1} for i in val_cms]
+    seen = {s["key"] for s in cms_sites}
+    dedup_sites = [s for s in ex_sites if s.get("key") and s["key"] not in seen and not seen.add(s["key"])]
+    live_url = GH_RAW + "/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt"
+    wp_url = "https://" + "tuapi.eees.cc/api.php?category=fengjing&type=302"
+    final_tv = {"updated_at": tag, "spider": tv_base.get("spider", ""), "wallpaper": tv_base.get("wallpaper", wp_url), "lives": [{"name": "自动测速精选直播", "type": 0, "url": live_url, "playerType": 1, "ua": "okhttp/3.15"}], "sites": cms_sites + dedup_sites, "parses": ex_parses[:20] if ex_parses else tv_base.get("parses", []), "flags": tv_base.get("flags", []), "ijk": tv_base.get("ijk", []), "ads": tv_base.get("ads", [])}
+    with open("tvbox.json", "w", encoding="utf-8") as f:
+        json.dump(final_tv, f, ensure_ascii=False, indent=2)
+    print(f"完成！TVBox {len(final_tv['sites'])} 站，LibreTV {len(val_cms)} 源，直播 {len(val_ch)} 台。")
 
-    print("2. 开始处理点播源...")
-    cms_pool, tvbox_base, extra_tvbox_sites, extra_parses = collect_all_vod()
-    print(f"共收集到 {len(cms_pool)} 个 CMS 点播接口，开始并发测速...")
 
+if __name__ == "__main__":
+    main()
