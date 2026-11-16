@@ -5,11 +5,14 @@
     {
       "name": "自动测速精选直播",
       "type": 0,
-      "url": "https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt",
+      "url": "https://://githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt",
       "playerType": 1,
       "ua": "okhttp/3.15"
     }
   ],
   "sites": [],
-  "parses": []
+  "parses": [],
+  "flags": [],
+  "ijk": [],
+  "ads": []
 }
