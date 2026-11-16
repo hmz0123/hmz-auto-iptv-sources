@@ -1,0 +1,31 @@
+name: Daily IPTV Source Update & Speedtest
+
+on:
+  schedule:
+    # 每天 UTC 时间 20:00 运行（即北京时间每天凌晨 04:00 自动执行）
+    - cron: '0 20 * * *'
+  # 允许在 GitHub 网页端手动点击运行测试
+  workflow_dispatch:
+
+jobs:
+  update-sources:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 运行抓取与测速脚本
+        run: python update_sources.py
+
+      - name: 自动提交并推送更新后的源
+        run: |
+          git config --local user.email "github-actions[bot]@://github.com"
+          git config --local user.name "github-actions[bot]"
+          git add libre_tv.m3u tvbox_live.txt tvbox.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: 自动更新测速视频源" && git push)
