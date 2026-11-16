@@ -1,0 +1,15 @@
+{
+  "spider": "",
+  "wallpaper": "https://eees.cc",
+  "lives": [
+    {
+      "name": "自动测速精选直播",
+      "type": 0,
+      "url": "./tvbox_live.txt",
+      "playerType": 1,
+      "ua": "okhttp/3.15"
+    }
+  ],
+  "sites": [],
+  "parses": []
+}
