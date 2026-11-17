@@ -276,8 +276,8 @@ def main():
     douban_libre_source = {
         "id": "douban",
         "name": "🎬豆瓣热播与评分推荐",
-        "api": "https://douban.com",
-        "url": "https://douban.com",
+        "api": "https://movie.douban.com/j/search_subjects",
+        "url": "https://movie.douban.com/j/search_subjects",
         "type": "douban"
     }
 
@@ -305,7 +305,7 @@ def main():
             "cache_time": 7200,
             "douban": {
                 "enabled": True,
-                "api": "https://douban.com"
+                "api": "https://movie.douban.com/j/search_subjects"
             },
             "sources": libre_sources,
             "api_site": api_site_dict
