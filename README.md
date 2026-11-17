@@ -10,7 +10,7 @@
 
 * **TVBox 完整版配置接口（直播 + 点播二合一）**
   ```text
-  https://github.com/hmz0123/hmz-auto-iptv-sources/blob/main/tvbox.json)
+  https://github.com/hmz0123/hmz-auto-iptv-sources/blob/main/tvbox.json
   ```
 
 * **TVBox 纯直播源接口**
