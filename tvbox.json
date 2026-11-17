@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17 02:50:54 UTC",
+  "updated_at": "2026-11-17 03:47:33 UTC",
   "spider": "https://githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar",
   "wallpaper": "https://eees.cc",
   "lives": [
@@ -22,8 +22,26 @@
       "filterable": 1
     },
     {
+      "key": "ffzy",
+      "name": "⚡非凡影视(888ms)",
+      "type": 1,
+      "api": "http://ffzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "lzzy",
+      "name": "⚡量子资源(888ms)",
+      "type": 1,
+      "api": "https://lziapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
       "key": "ikun",
-      "name": "⚡爱坤资源(201ms)",
+      "name": "⚡爱坤资源(173ms)",
       "type": 1,
       "api": "https://ikunzyapi.com/api.php/provide/vod/",
       "searchable": 1,
@@ -31,44 +49,8 @@
       "filterable": 1
     },
     {
-      "key": "sdzy",
-      "name": "⚡闪电资源(297ms)",
-      "type": 1,
-      "api": "https://sdzyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "modu",
-      "name": "⚡魔都资源(316ms)",
-      "type": 1,
-      "api": "https://mdzyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "tyys",
-      "name": "⚡天涯资源(342ms)",
-      "type": 1,
-      "api": "https://tyyszy.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "jisu",
-      "name": "⚡极速资源(342ms)",
-      "type": 1,
-      "api": "https://jszyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
       "key": "bfzy",
-      "name": "⚡暴风资源(573ms)",
+      "name": "⚡暴风资源(504ms)",
       "type": 1,
       "api": "https://bfzyapi.com/api.php/provide/vod/",
       "searchable": 1,
@@ -76,17 +58,62 @@
       "filterable": 1
     },
     {
-      "key": "jinying",
-      "name": "⚡金鹰资源(587ms)",
+      "key": "tyys",
+      "name": "⚡天涯资源(218ms)",
       "type": 1,
-      "api": "https://jinyingzy.com/api.php/provide/vod/",
+      "api": "https://tyyszy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "ryzy",
+      "name": "⚡如意资源(888ms)",
+      "type": 1,
+      "api": "https://rycjapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "hwba",
+      "name": "⚡华为吧资源(888ms)",
+      "type": 1,
+      "api": "https://cjhwba.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "wolong",
+      "name": "⚡卧龙资源(888ms)",
+      "type": 1,
+      "api": "https://wolongzyw.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "jisu",
+      "name": "⚡极速资源(114ms)",
+      "type": 1,
+      "api": "https://jszyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "modu",
+      "name": "⚡魔都资源(444ms)",
+      "type": 1,
+      "api": "https://mdzyapi.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
     },
     {
       "key": "subo",
-      "name": "⚡速博资源(708ms)",
+      "name": "⚡速博资源(403ms)",
       "type": 1,
       "api": "https://subocaiji.com/api.php/provide/vod/",
       "searchable": 1,
@@ -94,10 +121,100 @@
       "filterable": 1
     },
     {
+      "key": "xinlang",
+      "name": "⚡新浪资源(888ms)",
+      "type": 1,
+      "api": "https://xinlangapi.com",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "guangsu",
+      "name": "⚡光速资源(888ms)",
+      "type": 1,
+      "api": "https://guangsuapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
       "key": "hongniu",
-      "name": "⚡红牛资源(1336ms)",
+      "name": "⚡红牛资源(167ms)",
       "type": 1,
       "api": "https://hongniuzy2.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "jinying",
+      "name": "⚡金鹰资源(161ms)",
+      "type": 1,
+      "api": "https://jinyingzy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "sdzy",
+      "name": "⚡闪电资源(193ms)",
+      "type": 1,
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "yhzy",
+      "name": "⚡樱花资源(888ms)",
+      "type": 1,
+      "api": "https://apiyhzy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "wujin",
+      "name": "⚡无尽资源(888ms)",
+      "type": 1,
+      "api": "https://wujinapi.me/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "dbzy",
+      "name": "⚡豆瓣资源(888ms)",
+      "type": 1,
+      "api": "https://dbzy.tv/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "dytt",
+      "name": "⚡电影天堂(888ms)",
+      "type": 1,
+      "api": "http://dyttzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "heimuer",
+      "name": "⚡黑木耳资源(888ms)",
+      "type": 1,
+      "api": "https://heimuer.xyz/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "niuniu",
+      "name": "⚡牛牛资源(888ms)",
+      "type": 1,
+      "api": "https://niuniuzy.me/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
