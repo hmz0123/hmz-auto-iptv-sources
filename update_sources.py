@@ -7,9 +7,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-GH_RAW = "https://" + "raw.githubusercontent.com"
-GH_GIST = "https://" + "gist.githubusercontent.com"
-GH_IO = "https://" + "iptv-org.github.io"
+GH_RAW = "https://githubusercontent.com"
+GH_GIST = "https://githubusercontent.com"
+GH_IO = "https://github.io"
 API_PATH = "/api.php/provide/vod/"
 
 LIVE_SOURCE_URLS = [
@@ -20,10 +20,10 @@ LIVE_SOURCE_URLS = [
 ]
 
 TVBOX_VOD_URLS = [
+    GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
+    GH_RAW + "/yoursmile66/TVBox/main/XC.json",
     GH_RAW + "/25175/tvyuan/main/tvbox.json",
     GH_RAW + "/jinenge/tvbox/main/0.json",
-    GH_RAW + "/yoursmile66/TVBox/main/XC.json",
-    GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
 ]
 
 LIBRE_VOD_URLS = [
@@ -31,28 +31,32 @@ LIBRE_VOD_URLS = [
     GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
 ]
 
+# 修复了原有的双冒号拼写错误
 CMS_API_LIST = [
-    {"key": "ffzy", "name": "非凡影视", "api": "http://" + "://ffzyapi.com" + API_PATH},
-    {"key": "lzzy", "name": "量子资源", "api": "https://" + "://lziapi.com" + API_PATH},
-    {"key": "ikun", "name": "爱坤资源", "api": "https://" + "ikunzyapi.com" + API_PATH},
-    {"key": "bfzy", "name": "暴风资源", "api": "https://" + "bfzyapi.com" + API_PATH},
-    {"key": "tyys", "name": "天涯资源", "api": "https://" + "tyyszy.com" + API_PATH},
-    {"key": "ryzy", "name": "如意资源", "api": "https://" + "://rycjapi.com" + API_PATH},
-    {"key": "hwba", "name": "华为吧资源", "api": "https://" + "cj.hwba.live" + API_PATH},
-    {"key": "wolong", "name": "卧龙资源", "api": "https://" + "://wolongzyw.com" + API_PATH},
-    {"key": "jisu", "name": "极速资源", "api": "https://" + "jszyapi.com" + API_PATH},
-    {"key": "modu", "name": "魔都资源", "api": "https://" + "://mdzyapi.com" + API_PATH},
-    {"key": "subo", "name": "速博资源", "api": "https://" + "subocaiji.com" + API_PATH},
-    {"key": "xinlang", "name": "新浪资源", "api": "https://" + "://xinlangapi.com"},
-    {"key": "guangsu", "name": "光速资源", "api": "https://" + "://guangsuapi.com" + API_PATH},
-    {"key": "hongniu", "name": "红牛资源", "api": "https://" + "://hongniuzy2.com" + API_PATH},
-    {"key": "jinying", "name": "金鹰资源", "api": "https://" + "jinyingzy.com" + API_PATH},
-    {"key": "sdzy", "name": "闪电资源", "api": "https://" + "sdzyapi.com" + API_PATH},
-    {"key": "yhzy", "name": "樱花资源", "api": "https://" + "://apiyhzy.com" + API_PATH},
-    {"key": "wujin", "name": "无尽资源", "api": "https://" + "api.wujinapi.me" + API_PATH},
-    {"key": "dbzy", "name": "豆瓣资源", "api": "https://" + "dbzy.tv" + API_PATH},
-    {"key": "dytt", "name": "电影天堂", "api": "http://" + "://dyttzyapi.com" + API_PATH},
+    {"key": "ffzy", "name": "非凡影视", "api": "http://ffzyapi.com" + API_PATH},
+    {"key": "lzzy", "name": "量子资源", "api": "https://lziapi.com" + API_PATH},
+    {"key": "ikun", "name": "爱坤资源", "api": "https://ikunzyapi.com" + API_PATH},
+    {"key": "bfzy", "name": "暴风资源", "api": "https://bfzyapi.com" + API_PATH},
+    {"key": "tyys", "name": "天涯资源", "api": "https://tyyszy.com" + API_PATH},
+    {"key": "ryzy", "name": "如意资源", "api": "https://rycjapi.com" + API_PATH},
+    {"key": "hwba", "name": "华为吧资源", "api": "https://hwba.live" + API_PATH},
+    {"key": "wolong", "name": "卧龙资源", "api": "https://wolongzyw.com" + API_PATH},
+    {"key": "jisu", "name": "极速资源", "api": "https://jszyapi.com" + API_PATH},
+    {"key": "modu", "name": "魔都资源", "api": "https://mdzyapi.com" + API_PATH},
+    {"key": "subo", "name": "速博资源", "api": "https://subocaiji.com" + API_PATH},
+    {"key": "xinlang", "name": "新浪资源", "api": "https://xinlangapi.com" + API_PATH},
+    {"key": "guangsu", "name": "光速资源", "api": "https://guangsuapi.com" + API_PATH},
+    {"key": "hongniu", "name": "红牛资源", "api": "https://hongniuzy2.com" + API_PATH},
+    {"key": "jinying", "name": "金鹰资源", "api": "https://jinyingzy.com" + API_PATH},
+    {"key": "sdzy", "name": "闪电资源", "api": "https://sdzyapi.com" + API_PATH},
+    {"key": "yhzy", "name": "樱花资源", "api": "https://apiyhzy.com" + API_PATH},
+    {"key": "wujin", "name": "无尽资源", "api": "https://wujinapi.me" + API_PATH},
+    {"key": "dbzy", "name": "豆瓣资源", "api": "https://dbzy.tv" + API_PATH},
+    {"key": "dytt", "name": "电影天堂", "api": "http://dyttzyapi.com" + API_PATH},
 ]
+
+# 备用爬虫 Jar（当外部源全部抓取失败时，保障豆瓣首页推荐与榜单正常工作）
+DEFAULT_SPIDER = GH_RAW + "/FongMi/CatVodSpider/main/jar/custom_spider.jar"
 
 TIMEOUT = 6
 MAX_WORKERS = 30
@@ -107,6 +111,7 @@ def parse_live_content(content):
                 parsed.append({"name": ch_name, "group": "精选中文频道", "url": ch_url})
     return parsed
 
+
 def test_live_speed(channel):
     url = channel["url"]
     if "://[" in url:
@@ -148,6 +153,7 @@ def run_parallel(func, items, workers=20):
     finally:
         executor.shutdown(wait=True)
     return results
+
 
 def collect_all_vod():
     merged_cms = {item["api"]: dict(item) for item in CMS_API_LIST}
@@ -191,31 +197,77 @@ def main():
     val_ch = sorted(run_parallel(test_live_speed, uniq_ch, MAX_WORKERS), key=lambda x: x.get("latency", 999))
     if len(val_ch) < 10 and uniq_ch:
         val_ch = [c for c in uniq_ch if "://[" not in c["url"]][:200]
+
     with open("libre_tv.m3u", "w", encoding="utf-8") as f:
         f.write(f"#EXTM3U # Updated: {tag}\n" + "".join(f'#EXTINF:-1 group-title="{c["group"]}",{c["name"]}\n{c["url"]}\n' for c in val_ch))
+
     groups = {}
     for c in val_ch:
         groups.setdefault(c["group"], []).append(c)
     with open("tvbox_live.txt", "w", encoding="utf-8") as f:
         f.write(f"更新时间: {tag},#genre#\n\n" + "".join(f"{g},#genre#\n" + "".join(f"{c['name']},{c['url']}\n" for c in cl) + "\n" for g, cl in groups.items()))
+
     cms_pool, tv_base, ex_sites, ex_parses = collect_all_vod()
     val_cms = sorted(run_parallel(test_cms_api, cms_pool, 20), key=lambda x: x.get("latency", 888))
     if len(val_cms) < 5:
         for i in cms_pool[:30]:
             i.setdefault("latency", 888)
         val_cms = cms_pool[:30]
+
+    # 1. 输出 LibreTV 点播源（仅支持标准 CMS 接口，配合 LibreTV 前端内置豆瓣榜单使用）
     with open("libre_vod.json", "w", encoding="utf-8") as f:
-        json.dump({"version": 2, "updated_at": tag, "cache_time": 7200, "sources": [{"id": i["key"], "name": f"{i['name']} ({i.get('latency', 888)}ms)", "api": i["api"], "type": "cms"} for i in val_cms]}, f, ensure_ascii=False, indent=2)
-    cms_sites = [{"key": i["key"], "name": f"⚡{i['name']}({i.get('latency', 888)}ms)", "type": 1, "api": i["api"], "searchable": 1, "quickSearch": 1, "filterable": 1} for i in val_cms]
-    seen = {s["key"] for s in cms_sites}
+        json.dump({
+            "version": 2,
+            "updated_at": tag,
+            "cache_time": 7200,
+            "sources": [{"id": i["key"], "name": f"{i['name']} ({i.get('latency', 888)}ms)", "api": i["api"], "type": "cms"} for i in val_cms]
+        }, f, ensure_ascii=False, indent=2)
+
+    # 2. 构建 TVBox 点播站点，置顶添加【豆瓣评分与排行榜】专属页面
+    douban_site = {
+        "key": "douban_rank",
+        "name": "🎬豆瓣热播·评分排行榜",
+        "type": 3,
+        "api": "csp_Douban",
+        "searchable": 0,
+        "quickSearch": 0,
+        "filterable": 1
+    }
+
+    cms_sites = [{
+        "key": i["key"],
+        "name": f"⚡{i['name']}({i.get('latency', 888)}ms)",
+        "type": 1,
+        "api": i["api"],
+        "searchable": 1,
+        "quickSearch": 1,
+        "filterable": 1
+    } for i in val_cms]
+
+    seen = {"douban_rank", "Douban", "douban"} | {s["key"] for s in cms_sites}
     dedup_sites = [s for s in ex_sites if s.get("key") and s["key"] not in seen and not seen.add(s["key"])]
+
     live_url = GH_RAW + "/hmz0123/hmz-auto-iptv-sources/main/tvbox_live.txt"
-    wp_url = "https://" + "tuapi.eees.cc/api.php?category=fengjing&type=302"
-    final_tv = {"updated_at": tag, "spider": tv_base.get("spider", ""), "wallpaper": tv_base.get("wallpaper", wp_url), "lives": [{"name": "自动测速精选直播", "type": 0, "url": live_url, "playerType": 1, "ua": "okhttp/3.15"}], "sites": cms_sites + dedup_sites, "parses": ex_parses[:20] if ex_parses else tv_base.get("parses", []), "flags": tv_base.get("flags", []), "ijk": tv_base.get("ijk", []), "ads": tv_base.get("ads", [])}
+    wp_url = "https://eees.cc"
+
+    final_tv = {
+        "updated_at": tag,
+        "spider": tv_base.get("spider") or DEFAULT_SPIDER,
+        "wallpaper": tv_base.get("wallpaper", wp_url),
+        "lives": [{"name": "自动测速精选直播", "type": 0, "url": live_url, "playerType": 1, "ua": "okhttp/3.15"}],
+        "sites": [douban_site] + cms_sites + dedup_sites,
+        "parses": ex_parses[:20] if ex_parses else tv_base.get("parses", []),
+        "flags": tv_base.get("flags", []),
+        "ijk": tv_base.get("ijk", []),
+        "ads": tv_base.get("ads", [])
+    }
+
     with open("tvbox.json", "w", encoding="utf-8") as f:
         json.dump(final_tv, f, ensure_ascii=False, indent=2)
-    print(f"完成！TVBox {len(final_tv['sites'])} 站，LibreTV {len(val_cms)} 源，直播 {len(val_ch)} 台。")
+
+    print(f"完成！TVBox {len(final_tv['sites'])} 站（含豆瓣榜单），LibreTV {len(val_cms)} 源，直播 {len(val_ch)} 台。")
 
 
 if __name__ == "__main__":
     main()
+
