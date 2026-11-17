@@ -2,7 +2,8 @@ name: Daily IPTV Source Update & Speedtest
 
 on:
   schedule:
-    - cron: '0 20 * * *'
+    # 避开整点高峰期：UTC 每天 20:17 运行（对应北京时间次日凌晨 04:17）
+    - cron: '17 20 * * *'
   workflow_dispatch:
 
 permissions:
@@ -28,13 +29,21 @@ jobs:
 
       - name: 强制提交并推送更新后的源
         run: |
-          git config --local user.email "github-actions[bot]@://github.com"
+          git config --local user.email "41898282+github-actions[bot]@://github.com"
           git config --local user.name "github-actions[bot]"
           git add -f libre_tv.m3u libre_vod.json tvbox_live.txt tvbox.json
-          git status
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "chore: 自动更新测速视频源 $(date -u +'%Y-%m-%d %H:%M:%S')"
             git push origin HEAD:main
           else
             echo "文件内容无变化，跳过推送"
           fi
+
+      # 防休眠保活机制：防止因 60 天无人工提交导致定时任务被 GitHub 自动禁用
+      - name: 保持工作流活跃 (Keepalive)
+        if: always()
+        uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          time_elapsed: 50
+          committer_username: "github-actions[bot]"
+          committer_email: "41898282+github-actions[bot]@://github.com"
