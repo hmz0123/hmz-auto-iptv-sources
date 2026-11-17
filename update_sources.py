@@ -8,9 +8,9 @@ from concurrent.futures import ThreadPoolExecutor
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # 1. 修正正确的 GitHub / Gist / Pages 域名
-GH_RAW = "https://githubusercontent.com"
-GH_GIST = "https://githubusercontent.com"
-GH_IO = "https://github.io"
+GH_RAW = "https://raw.githubusercontent.com"
+GH_GIST = "https://gist.githubusercontent.com"
+GH_IO = "https://iptv-org.github.io"
 API_PATH = "/api.php/provide/vod/"
 
 # 2. 高可用 IPv4 + IPv6 双栈直播源
