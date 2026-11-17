@@ -7,12 +7,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+# 1. 修正正确的 GitHub / Gist / Pages 域名
 GH_RAW = "https://githubusercontent.com"
 GH_GIST = "https://githubusercontent.com"
 GH_IO = "https://github.io"
 API_PATH = "/api.php/provide/vod/"
 
-# 1. 高可用 IPv4 + IPv6 双栈直播源
+# 2. 高可用 IPv4 + IPv6 双栈直播源
 LIVE_SOURCE_URLS = [
     GH_RAW + "/fanmingming/live/main/tv/m3u/ipv6.m3u",
     GH_RAW + "/vbskycn/iptv/master/tv/iptv4.m3u",
@@ -22,28 +23,28 @@ LIVE_SOURCE_URLS = [
     GH_RAW + "/YueChan/Live/main/APTV.m3u",
     GH_RAW + "/Guovin/iptv-api/gd/output/result.m3u",
     GH_RAW + "/Kimentanm/aptv/master/m3u/iptv.m3u",
-    "https://kilvn.com",
+    GH_RAW + "/YanG-1989/m3u/main/Gather.m3u",
     GH_IO + "/iptv/languages/zho.m3u",
 ]
 
-# 2. 最新维护的 TVBox 聚合配置源
+# 3. 最新维护的 TVBox 聚合配置源
 TVBOX_VOD_URLS = [
     GH_RAW + "/FongMi/CatVodSpider/main/json/config.json",
-    GH_RAW + "/Reflyer823/tvbox-config/master/main.json",
     GH_RAW + "/yoursmile66/TVBox/main/XC.json",
     GH_RAW + "/25175/tvyuan/main/tvbox.json",
     GH_RAW + "/jinenge/tvbox/main/0.json",
-    "https://gitlab.com",
+    GH_RAW + "/gaotianliuyun/gao/master/js.json",
+    GH_RAW + "/dxawi/0/main/0.json",
 ]
 
-# 3. 最新 LibreTV 专用点播源
+# 4. 最新 LibreTV 专用点播源
 LIBRE_VOD_URLS = [
     GH_RAW + "/wokaotianshi123/jgcj/main/libretv.json",
     GH_GIST + "/Shupian0510/2d02c1377bcec7c4cbb4abdc7cee0baa/raw/libretv-33-sources.json",
     GH_GIST + "/xuyishan8058/fcd88d1a9e84c024cd5bc91531803ed3/raw/libretv-sources.json",
 ]
 
-# 4. 内置高可用苹果 CMS 采集接口（已修复双冒号拼写错误）
+# 5. 内置高可用苹果 CMS 采集接口
 CMS_API_LIST = [
     {"key": "ffzy", "name": "非凡影视", "api": "http://ffzyapi.com" + API_PATH},
     {"key": "lzzy", "name": "量子资源", "api": "https://lziapi.com" + API_PATH},
@@ -51,12 +52,12 @@ CMS_API_LIST = [
     {"key": "bfzy", "name": "暴风资源", "api": "https://bfzyapi.com" + API_PATH},
     {"key": "tyys", "name": "天涯资源", "api": "https://tyyszy.com" + API_PATH},
     {"key": "ryzy", "name": "如意资源", "api": "https://rycjapi.com" + API_PATH},
-    {"key": "hwba", "name": "华为吧资源", "api": "https://hwba.live" + API_PATH},
+    {"key": "hwba", "name": "华为吧资源", "api": "https://cjhwba.com" + API_PATH},
     {"key": "wolong", "name": "卧龙资源", "api": "https://wolongzyw.com" + API_PATH},
     {"key": "jisu", "name": "极速资源", "api": "https://jszyapi.com" + API_PATH},
     {"key": "modu", "name": "魔都资源", "api": "https://mdzyapi.com" + API_PATH},
     {"key": "subo", "name": "速博资源", "api": "https://subocaiji.com" + API_PATH},
-    {"key": "xinlang", "name": "新浪资源", "api": "https://xinlangapi.com" + API_PATH},
+    {"key": "xinlang", "name": "新浪资源", "api": "https://xinlangapi.com"},
     {"key": "guangsu", "name": "光速资源", "api": "https://guangsuapi.com" + API_PATH},
     {"key": "hongniu", "name": "红牛资源", "api": "https://hongniuzy2.com" + API_PATH},
     {"key": "jinying", "name": "金鹰资源", "api": "https://jinyingzy.com" + API_PATH},
@@ -65,18 +66,22 @@ CMS_API_LIST = [
     {"key": "wujin", "name": "无尽资源", "api": "https://wujinapi.me" + API_PATH},
     {"key": "dbzy", "name": "豆瓣资源", "api": "https://dbzy.tv" + API_PATH},
     {"key": "dytt", "name": "电影天堂", "api": "http://dyttzyapi.com" + API_PATH},
+    {"key": "heimuer", "name": "黑木耳资源", "api": "https://heimuer.xyz" + API_PATH},
+    {"key": "niuniu", "name": "牛牛资源", "api": "https://niuniuzy.me" + API_PATH},
 ]
 
 DEFAULT_SPIDER = GH_RAW + "/FongMi/CatVodSpider/main/jar/custom_spider.jar"
 TIMEOUT = 6
 MAX_WORKERS = 30
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+}
+
+
 def fetch_url_text(url, timeout=15):
     req = urllib.request.Request(url, headers=HEADERS)
-    resp = urllib.request.urlopen(req, timeout=timeout)
-    data = resp.read().decode("utf-8", errors="ignore")
-    resp.close()
-    return data
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="ignore")
 
 
 def clean_json_text(raw_text):
@@ -90,7 +95,7 @@ def is_chinese_channel(name):
     if re.search(r"[\u4e00-\u9fff]", name):
         return True
     upper = name.upper()
-    return "CCTV" in upper or "CGTN" in upper
+    return "CCTV" in upper or "CGTN" in upper or "TVB" in upper
 
 
 def categorize_channel(name, raw_group=""):
@@ -99,7 +104,7 @@ def categorize_channel(name, raw_group=""):
         return "央视频道"
     if "卫视" in name:
         return "卫视频道"
-    if any(k in name for k in ("凤凰", "翡翠", "明珠", "无线", "TVB", "香港", "澳门", "台湾", "东森", "中天", "民视", "年代")):
+    if any(k in upper for k in ("凤凰", "翡翠", "明珠", "无线", "TVB", "香港", "澳门", "台湾", "东森", "中天", "民视", "年代")):
         return "港澳台频道"
     return raw_group if raw_group and raw_group not in ("未分组", "其他") else "精选地方与轮播"
 
@@ -136,12 +141,11 @@ def test_live_speed(channel):
     start_time = time.time()
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "okhttp/3.15"})
-        resp = urllib.request.urlopen(req, timeout=TIMEOUT)
-        status, chunk = resp.status, resp.read(512)
-        resp.close()
-        if status in (200, 206, 301, 302) and len(chunk) > 0:
-            channel["latency"] = round((time.time() - start_time) * 1000)
-            return channel
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            status, chunk = resp.status, resp.read(512)
+            if status in (200, 206, 301, 302) and len(chunk) > 0:
+                channel["latency"] = round((time.time() - start_time) * 1000)
+                return channel
     except Exception:
         pass
     return None
@@ -162,16 +166,15 @@ def test_cms_api(site):
 
 def run_parallel(func, items, workers=20):
     results = []
-    executor = ThreadPoolExecutor(max_workers=workers)
-    try:
+    with ThreadPoolExecutor(max_workers=workers) as executor:
         for res in executor.map(func, items):
             if res:
                 results.append(res)
-    finally:
-        executor.shutdown(wait=True)
     return results
+
+
 def collect_all_vod():
-    merged_cms = {item["api"]: dict(item) for item in CMS_API_LIST}
+    merged_cms = {item["api"].rstrip("/"): dict(item) for item in CMS_API_LIST}
     tvbox_base, extra_sites, all_parses = {}, [], []
 
     for url in LIBRE_VOD_URLS:
@@ -182,12 +185,14 @@ def collect_all_vod():
             )
             for s in items:
                 api = (s.get("api") or s.get("url") or "").strip()
-                if api.startswith("http") and api not in merged_cms:
-                    merged_cms[api] = {
+                norm_api = api.rstrip("/")
+                if api.startswith("http") and norm_api not in merged_cms:
+                    merged_cms[norm_api] = {
                         "key": s.get("id") or f"s_{len(merged_cms)}",
                         "name": s.get("name", "聚合源"),
                         "api": api
                     }
+            print(f"LibreTV 源抓取成功: {url.split('/')[-1]}")
         except Exception as e:
             print(f"抓取 LibreTV 源失败: {url} -> {e}")
 
@@ -198,8 +203,9 @@ def collect_all_vod():
                 tvbox_base = data
             for s in data.get("sites", []):
                 api = str(s.get("api", "")).strip()
-                if s.get("type") in (0, 1) and api.startswith("http") and api not in merged_cms:
-                    merged_cms[api] = {
+                norm_api = api.rstrip("/")
+                if s.get("type") in (0, 1) and api.startswith("http") and norm_api not in merged_cms:
+                    merged_cms[norm_api] = {
                         "key": s.get("key") or f"t_{len(merged_cms)}",
                         "name": s.get("name", "TVBox站"),
                         "api": api
@@ -207,15 +213,16 @@ def collect_all_vod():
                 elif not api.startswith("http"):
                     extra_sites.append(s)
             all_parses.extend(data.get("parses", []))
+            print(f"TVBox 源抓取成功: {url.split('/')[-1]}")
         except Exception as e:
             print(f"抓取 TVBox 源失败: {url} -> {e}")
 
     return list(merged_cms.values()), tvbox_base, extra_sites, all_parses
 
-
 def main():
     tag = time.strftime("%Y-%m-%d %H:%M:%S UTC")
 
+    # 1. 抓取并测速直播频道
     raw_ch = []
     for u in LIVE_SOURCE_URLS:
         try:
@@ -229,12 +236,13 @@ def main():
     uniq_ch = list({c["url"]: c for c in raw_ch}.values())
     val_ch = sorted(run_parallel(test_live_speed, uniq_ch, MAX_WORKERS), key=lambda x: x.get("latency", 999))
 
-    if len(val_ch) < 30 and uniq_ch:
+    # 兜底机制：如果海外服务器测速通过少于 50 条，补充未测通的国内双栈源
+    if len(val_ch) < 50 and uniq_ch:
         tested_urls = {c["url"] for c in val_ch}
         ipv4_pool = [c for c in uniq_ch if "://[" not in c["url"] and c["url"] not in tested_urls]
         ipv6_pool = [c for c in uniq_ch if "://[" in c["url"] and c["url"] not in tested_urls]
-        val_ch.extend(ipv4_pool[:250] + ipv6_pool[:250])
-        print(f"启用双栈兜底：IPv4 补充 {min(len(ipv4_pool), 250)} 条，IPv6 补充 {min(len(ipv6_pool), 250)} 条")
+        val_ch.extend(ipv4_pool[:300] + ipv6_pool[:300])
+        print(f"启用双栈兜底：IPv4 补充 {min(len(ipv4_pool), 300)} 条，IPv6 补充 {min(len(ipv6_pool), 300)} 条")
 
     group_order = ["央视频道", "卫视频道", "港澳台频道", "精选地方与轮播"]
     groups = {g: [] for g in group_order}
@@ -254,24 +262,56 @@ def main():
             f"{g},#genre#\n" + "".join(f"{c['name']},{c['url']}\n" for c in cl) + "\n" for g, cl in groups.items()
         ))
 
+    # 2. 抓取并测速点播源
     cms_pool, tv_base, ex_sites, ex_parses = collect_all_vod()
-    val_cms = sorted(run_parallel(test_cms_api, cms_pool, 20), key=lambda x: x.get("latency", 888))
-    if len(val_cms) < 5:
-        for i in cms_pool[:30]:
+    print(f"共收集到去重后点播接口 {len(cms_pool)} 个，开始测速...")
+    val_cms = sorted(run_parallel(test_cms_api, cms_pool, 25), key=lambda x: x.get("latency", 888))
+
+    if len(val_cms) < 10:
+        for i in cms_pool[:40]:
             i.setdefault("latency", 888)
-        val_cms = cms_pool[:30]
+        val_cms = cms_pool[:40]
+
+    # 3. 生成 libre_vod.json（内置豆瓣榜单 + 完整 CMS 源）
+    douban_libre_source = {
+        "id": "douban",
+        "name": "🎬豆瓣热播与评分推荐",
+        "api": "https://douban.com",
+        "url": "https://douban.com",
+        "type": "douban"
+    }
+
+    libre_sources = [douban_libre_source] + [
+        {
+            "id": i["key"],
+            "name": f"{i['name']} ({i.get('latency', 888)}ms)",
+            "api": i["api"],
+            "url": i["api"],
+            "type": "cms"
+        }
+        for i in val_cms
+    ]
+
+    # 同时兼容 api_site 字典格式（适配不同版本的 LibreTV 前端）
+    api_site_dict = {
+        s["id"]: {"name": s["name"], "api": s["api"], "detail": ""}
+        for s in libre_sources
+    }
 
     with open("libre_vod.json", "w", encoding="utf-8") as f:
         json.dump({
             "version": 2,
             "updated_at": tag,
             "cache_time": 7200,
-            "sources": [
-                {"id": i["key"], "name": f"{i['name']} ({i.get('latency', 888)}ms)", "api": i["api"], "url": i["api"], "type": "cms"}
-                for i in val_cms
-            ]
+            "douban": {
+                "enabled": True,
+                "api": "https://douban.com"
+            },
+            "sources": libre_sources,
+            "api_site": api_site_dict
         }, f, ensure_ascii=False, indent=2)
 
+    # 4. 生成 tvbox.json
     douban_site = {
         "key": "douban_rank",
         "name": "🎬豆瓣热播·评分排行榜",
@@ -313,7 +353,7 @@ def main():
     with open("tvbox.json", "w", encoding="utf-8") as f:
         json.dump(final_tv, f, ensure_ascii=False, indent=2)
 
-    print(f"完成！TVBox {len(final_tv['sites'])} 站（含豆瓣榜单），LibreTV {len(val_cms)} 源，直播 {len(ordered_ch)} 台。")
+    print(f"完成！TVBox {len(final_tv['sites'])} 站（含豆瓣榜单），LibreTV {len(libre_sources)} 源（含豆瓣），直播 {len(ordered_ch)} 台。")
 
 
 if __name__ == "__main__":
