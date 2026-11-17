@@ -9,7 +9,8 @@
 #####################################
 > [💡 **国内网络提示**：]
 > 如果电视或播放器直连 `://githubusercontent.com` 较慢，可在下方链接前加上加速前缀（如 'https://gh-proxy.com'、 `https://ghfast.top` 或 `https://ghproxy.com`）。
->或者
+> 
+或者
   一、 jsDelivr 全球 CDN 加速链接（主力推荐，国内访问最稳、秒开）
 适合直接填入 TVBox、影视仓、OK影视、LibreTV 等客户端：
 https://jsdelivr.net
