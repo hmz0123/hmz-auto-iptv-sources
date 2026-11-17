@@ -1,60 +1,69 @@
 {
   "version": 2,
-  "updated_at": "2026-11-17 02:33:41 UTC",
+  "updated_at": "2026-11-17 02:50:54 UTC",
   "cache_time": 7200,
   "sources": [
     {
-      "id": "sdzy",
-      "name": "闪电资源 (213ms)",
-      "api": "https://sdzyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "jisu",
-      "name": "极速资源 (215ms)",
-      "api": "https://jszyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "jinying",
-      "name": "金鹰资源 (223ms)",
-      "api": "https://jinyingzy.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "bfzy",
-      "name": "暴风资源 (254ms)",
-      "api": "https://bfzyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "hongniu",
-      "name": "红牛资源 (259ms)",
-      "api": "https://hongniuzy2.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
       "id": "ikun",
-      "name": "爱坤资源 (296ms)",
+      "name": "爱坤资源 (201ms)",
       "api": "https://ikunzyapi.com/api.php/provide/vod/",
+      "url": "https://ikunzyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
-      "id": "tyys",
-      "name": "天涯资源 (341ms)",
-      "api": "https://tyyszy.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "subo",
-      "name": "速博资源 (474ms)",
-      "api": "https://subocaiji.com/api.php/provide/vod/",
+      "id": "sdzy",
+      "name": "闪电资源 (297ms)",
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
+      "url": "https://sdzyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
       "id": "modu",
-      "name": "魔都资源 (612ms)",
+      "name": "魔都资源 (316ms)",
       "api": "https://mdzyapi.com/api.php/provide/vod/",
+      "url": "https://mdzyapi.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "tyys",
+      "name": "天涯资源 (342ms)",
+      "api": "https://tyyszy.com/api.php/provide/vod/",
+      "url": "https://tyyszy.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "jisu",
+      "name": "极速资源 (342ms)",
+      "api": "https://jszyapi.com/api.php/provide/vod/",
+      "url": "https://jszyapi.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "bfzy",
+      "name": "暴风资源 (573ms)",
+      "api": "https://bfzyapi.com/api.php/provide/vod/",
+      "url": "https://bfzyapi.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "jinying",
+      "name": "金鹰资源 (587ms)",
+      "api": "https://jinyingzy.com/api.php/provide/vod/",
+      "url": "https://jinyingzy.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "subo",
+      "name": "速博资源 (708ms)",
+      "api": "https://subocaiji.com/api.php/provide/vod/",
+      "url": "https://subocaiji.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "hongniu",
+      "name": "红牛资源 (1336ms)",
+      "api": "https://hongniuzy2.com/api.php/provide/vod/",
+      "url": "https://hongniuzy2.com/api.php/provide/vod/",
       "type": "cms"
     }
   ]
