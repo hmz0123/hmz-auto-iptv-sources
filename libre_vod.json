@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-11-20 01:46:31 UTC",
+  "updated_at": "2026-11-21 01:32:12 UTC",
   "cache_time": 7200,
   "douban": {
     "enabled": true,
@@ -15,346 +15,577 @@
       "type": "douban"
     },
     {
-      "id": "jisu",
-      "name": "极速资源 (170ms)",
-      "api": "https://jszyapi.com/api.php/provide/vod/",
-      "url": "https://jszyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "s_95",
-      "name": "最大 (171ms)",
-      "api": "http://zuidazy.me/api.php/provide/vod/",
-      "url": "http://zuidazy.me/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "s_29",
-      "name": "光速资源 (201ms)",
-      "api": "https://api.guangsuapi.com/api.php/provide/vod",
-      "url": "https://api.guangsuapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_94",
-      "name": "魔都 (204ms)",
-      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
-      "url": "https://caiji.moduapi.cc/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "tyys",
-      "name": "天涯资源 (206ms)",
-      "api": "https://tyyszy.com/api.php/provide/vod/",
-      "url": "https://tyyszy.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "s_45",
-      "name": "牛牛资源 (229ms)",
-      "api": "https://api.niuniuzy.me/api.php/provide/vod",
-      "url": "https://api.niuniuzy.me/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_48",
-      "name": "丫丫资源 (240ms)",
-      "api": "https://cj.yayazy.net/api.php/provide/vod",
-      "url": "https://cj.yayazy.net/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "sdzy",
-      "name": "闪电资源 (253ms)",
-      "api": "https://sdzyapi.com/api.php/provide/vod/",
-      "url": "https://sdzyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "IK",
-      "name": "IK (261ms)",
-      "api": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
-      "url": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
-      "type": "cms"
-    },
-    {
-      "id": "s_68",
-      "name": "光速资源 (267ms)",
-      "api": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
-      "url": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
-      "type": "cms"
-    },
-    {
-      "id": "s_26",
-      "name": "百度资源 (269ms)",
-      "api": "https://api.apibdzy.com/api.php/provide/vod",
-      "url": "https://api.apibdzy.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_40",
-      "name": "最大资源 (270ms)",
-      "api": "https://api.zuidapi.com/api.php/provide/vod",
-      "url": "https://api.zuidapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_46",
-      "name": "索尼资源 (271ms)",
-      "api": "https://suoniapi.com/api.php/provide/vod",
-      "url": "https://suoniapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_72",
-      "name": "闪电资源 (274ms)",
-      "api": "http://sdzyapi.com/api.php/provide/vod",
-      "url": "http://sdzyapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_30",
-      "name": "豪华资源 (289ms)",
-      "api": "https://hhzyapi.com/api.php/provide/vod",
-      "url": "https://hhzyapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_62",
-      "name": "森林资源 (296ms)",
-      "api": "http://slapibf.com/api.php/provide/vod",
-      "url": "http://slapibf.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_50",
-      "name": "紅牛資源 (302ms)",
-      "api": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
-      "url": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
-      "type": "cms"
-    },
-    {
-      "id": "s_93",
-      "name": "无尽 (304ms)",
-      "api": "https://api.wujinapi.com/api.php/provide/vod/",
-      "url": "https://api.wujinapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "s_31",
-      "name": "红牛资源 (308ms)",
-      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
-      "url": "https://www.hongniuzy2.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_49",
-      "name": "樱花资源 (339ms)",
-      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod",
-      "url": "https://m3u8.apiyhzy.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_42",
-      "name": "U酷资源2 (344ms)",
-      "api": "https://api.ukuapi.com/api.php/provide/vod",
-      "url": "https://api.ukuapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_36",
-      "name": "魔都资源 (348ms)",
-      "api": "https://www.mdzyapi.com/api.php/provide/vod",
-      "url": "https://www.mdzyapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_41",
-      "name": "U酷资源 (369ms)",
-      "api": "https://api.ukuapi88.com/api.php/provide/vod",
-      "url": "https://api.ukuapi88.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "hongniu",
-      "name": "红牛资源 (376ms)",
-      "api": "https://hongniuzy2.com/api.php/provide/vod/",
-      "url": "https://hongniuzy2.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "jinying",
-      "name": "金鹰资源 (383ms)",
-      "api": "https://jinyingzy.com/api.php/provide/vod/",
-      "url": "https://jinyingzy.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "ikun",
-      "name": "爱坤资源 (448ms)",
-      "api": "https://ikunzyapi.com/api.php/provide/vod/",
-      "url": "https://ikunzyapi.com/api.php/provide/vod/",
-      "type": "cms"
-    },
-    {
-      "id": "s_32",
-      "name": "虎牙资源 (464ms)",
-      "api": "https://www.huyaapi.com/api.php/provide/vod",
-      "url": "https://www.huyaapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_27",
-      "name": "电影天堂 (468ms)",
-      "api": "https://caiji.dyttzyapi.com/api.php/provide/vod",
-      "url": "https://caiji.dyttzyapi.com/api.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_33",
-      "name": "金鹰资源 (500ms)",
-      "api": "https://jyzyapi.com/provide/vod",
-      "url": "https://jyzyapi.com/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_39",
-      "name": "新浪资源 (502ms)",
-      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
-      "url": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
-      "type": "cms"
-    },
-    {
-      "id": "s_66",
-      "name": "閃電資源 (503ms)",
-      "api": "http://sdzyapi.com/api.php/provide/vod/from/sdm3u8",
-      "url": "http://sdzyapi.com/api.php/provide/vod/from/sdm3u8",
-      "type": "cms"
-    },
-    {
-      "id": "s_51",
-      "name": "量子資源 (524ms)",
-      "api": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
-      "url": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
-      "type": "cms"
-    },
-    {
-      "id": "s_67",
-      "name": "金鹰资源 (538ms)",
+      "id": "s_108",
+      "name": "金鹰资源 (32ms)",
       "api": "http://jyzyapi.com/provide/vod/from/jinyingm3u8",
       "url": "http://jyzyapi.com/provide/vod/from/jinyingm3u8",
       "type": "cms"
     },
     {
-      "id": "modu",
-      "name": "魔都资源 (573ms)",
-      "api": "https://mdzyapi.com/api.php/provide/vod/",
-      "url": "https://mdzyapi.com/api.php/provide/vod/",
+      "id": "w5yx",
+      "name": "无尽资源 (76ms)",
+      "api": "https://api.wujinapi.me/api.php/provide/vod",
+      "url": "https://api.wujinapi.me/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_81",
+      "name": "电影天堂 (79ms)",
+      "api": "https://caiji.dyttzyapi.com/api.php/provide/vod",
+      "url": "https://caiji.dyttzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "IK",
+      "name": "IK (93ms)",
+      "api": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
+      "url": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
+      "type": "cms"
+    },
+    {
+      "id": "jisu",
+      "name": "极速资源 (102ms)",
+      "api": "https://jszyapi.com/api.php/provide/vod/",
+      "url": "https://jszyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
       "id": "bfzy",
-      "name": "暴风资源 (575ms)",
+      "name": "暴风资源 (105ms)",
       "api": "https://bfzyapi.com/api.php/provide/vod/",
       "url": "https://bfzyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
-      "id": "s_47",
-      "name": "天涯影视 (638ms)",
+      "id": "yzsh",
+      "name": "CK伦理资源 (106ms)",
+      "api": "https://ckzy.me/api.php/provide/vod",
+      "url": "https://ckzy.me/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "3s1g",
+      "name": "最大资源 (107ms)",
+      "api": "https://api.zuidapi.com/api.php/provide/vod",
+      "url": "https://api.zuidapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_83",
+      "name": "金鹰资源 (107ms)",
+      "api": "https://jyzyapi.com/provide/vod",
+      "url": "https://jyzyapi.com/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "2vic",
+      "name": "光速资源 (108ms)",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod",
+      "url": "https://api.guangsuapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "5pxf",
+      "name": "jkun资源 (115ms)",
+      "api": "https://jkunzyapi.com/api.php/provide/vod",
+      "url": "https://jkunzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "14er",
+      "name": "索尼资源 (118ms)",
+      "api": "https://suoniapi.com/api.php/provide/vod",
+      "url": "https://suoniapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "hongniu",
+      "name": "红牛资源 (126ms)",
+      "api": "https://hongniuzy2.com/api.php/provide/vod/",
+      "url": "https://hongniuzy2.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "s_91",
+      "name": "紅牛資源 (128ms)",
+      "api": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
+      "url": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
+      "type": "cms"
+    },
+    {
+      "id": "s_87",
+      "name": "U酷资源 (135ms)",
+      "api": "https://api.ukuapi88.com/api.php/provide/vod",
+      "url": "https://api.ukuapi88.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_109",
+      "name": "光速资源 (135ms)",
+      "api": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
+      "url": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
+      "type": "cms"
+    },
+    {
+      "id": "eup8",
+      "name": "红牛资源 (138ms)",
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
+      "url": "https://www.hongniuzy2.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "ulwt",
+      "name": "免费资源站 (139ms)",
+      "api": "https://yuanlib.com/api.php/provide/vod",
+      "url": "https://yuanlib.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_88",
+      "name": "U酷资源2 (143ms)",
+      "api": "https://api.ukuapi.com/api.php/provide/vod",
+      "url": "https://api.ukuapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "pf75",
+      "name": "快车资源 (149ms)",
+      "api": "https://caiji.kuaichezy.org/api.php/provide/vod",
+      "url": "https://caiji.kuaichezy.org/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "9mvo",
+      "name": "黄色仓库 (150ms)",
+      "api": "https://hsckzy888.com/api.php/provide/vod",
+      "url": "https://hsckzy888.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "45tu",
+      "name": "搜av资源 (153ms)",
+      "api": "https://api.souavzyw.net/api.php/provide/vod",
+      "url": "https://api.souavzyw.net/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "jinying",
+      "name": "金鹰资源 (163ms)",
+      "api": "https://jinyingzy.com/api.php/provide/vod/",
+      "url": "https://jinyingzy.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "5jr5",
+      "name": "牛牛资源 (164ms)",
+      "api": "https://api.niuniuzy.me/api.php/provide/vod",
+      "url": "https://api.niuniuzy.me/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "14ib",
+      "name": "鸭鸭资源 (166ms)",
+      "api": "https://cj.yayazy.net/api.php/provide/vod",
+      "url": "https://cj.yayazy.net/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_136",
+      "name": "最大 (169ms)",
+      "api": "http://zuidazy.me/api.php/provide/vod/",
+      "url": "http://zuidazy.me/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "302o",
+      "name": "ok资源站 (170ms)",
+      "api": "http://api.okzyw.net/api.php/provide/vod",
+      "url": "http://api.okzyw.net/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "fbgg",
+      "name": "魔都资源 (171ms)",
+      "api": "https://www.mdzyapi.com/api.php/provide/vod",
+      "url": "https://www.mdzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "e62g",
+      "name": "老色P资源 (172ms)",
+      "api": "https://apilsbzy1.com/api.php/provide/vod",
+      "url": "https://apilsbzy1.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "ijnf",
+      "name": "无水印资源 (182ms)",
+      "api": "https://api.wsyzy.net/api.php/provide/vod",
+      "url": "https://api.wsyzy.net/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_80",
+      "name": "百度资源 (182ms)",
+      "api": "https://api.apibdzy.com/api.php/provide/vod",
+      "url": "https://api.apibdzy.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "auej",
+      "name": "虎牙资源 (183ms)",
+      "api": "https://www.huyaapi.com/api.php/provide/vod",
+      "url": "https://www.huyaapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "f0ly",
+      "name": "玉兔资源 (196ms)",
+      "api": "https://apiyutu.com/api.php/provide/vod",
+      "url": "https://apiyutu.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "yn14",
+      "name": "天涯资源 (197ms)",
       "api": "https://tyyszyapi.com/api.php/provide/vod",
       "url": "https://tyyszyapi.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_23",
-      "name": "1080资源库 (668ms)",
-      "api": "https://api.1080zyku.com/inc/apijson.php",
-      "url": "https://api.1080zyku.com/inc/apijson.php",
+      "id": "h36r",
+      "name": "西瓜资源 (208ms)",
+      "api": "https://caiji.xgzyapi.com/api.php/provide/vod",
+      "url": "https://caiji.xgzyapi.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "subo",
-      "name": "速博资源 (684ms)",
-      "api": "https://subocaiji.com/api.php/provide/vod/",
-      "url": "https://subocaiji.com/api.php/provide/vod/",
+      "id": "hh0f",
+      "name": "芒果资源 (209ms)",
+      "api": "https://caiji.mgzyapi.com/api.php/provide/vod",
+      "url": "https://caiji.mgzyapi.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_69",
-      "name": "奥斯卡资源网 (763ms)",
+      "id": "ikun",
+      "name": "爱坤资源 (211ms)",
+      "api": "https://ikunzyapi.com/api.php/provide/vod/",
+      "url": "https://ikunzyapi.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "s_86",
+      "name": "新浪资源 (212ms)",
+      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
+      "url": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "cofx",
+      "name": "360资源 (232ms)",
+      "api": "https://360zyzz.com/api.php/provide/vod",
+      "url": "https://360zyzz.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "tyys",
+      "name": "天涯资源 (240ms)",
+      "api": "https://tyyszy.com/api.php/provide/vod/",
+      "url": "https://tyyszy.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "3cuj",
+      "name": "豆豆资源 (243ms)",
+      "api": "https://api.douapi.cc/api.php/provide/vod",
+      "url": "https://api.douapi.cc/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "dk0j",
+      "name": "火速资源 (245ms)",
+      "api": "https://api.huosuapi.cc/api.php/provide/vod",
+      "url": "https://api.huosuapi.cc/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_134",
+      "name": "无尽 (256ms)",
+      "api": "https://api.wujinapi.com/api.php/provide/vod/",
+      "url": "https://api.wujinapi.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "plnd",
+      "name": "电影天堂资源 (259ms)",
+      "api": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+      "url": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "hc4c",
+      "name": "红楼资源 (261ms)",
+      "api": "https://www.hlzyapi.vip/api.php/provide/vod",
+      "url": "https://www.hlzyapi.vip/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "qvci",
+      "name": "豪华资源 (274ms)",
+      "api": "https://hhzyapi.com/api.php/provide/vod",
+      "url": "https://hhzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_103",
+      "name": "森林资源 (285ms)",
+      "api": "http://slapibf.com/api.php/provide/vod",
+      "url": "http://slapibf.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_110",
+      "name": "奥斯卡资源网 (296ms)",
       "api": "http://aosikazy.com/api.php/provide/vod",
       "url": "http://aosikazy.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_38",
-      "name": "速播资源 (923ms)",
-      "api": "https://subocj.com/api.php/provide/vod",
-      "url": "https://subocj.com/api.php/provide/vod",
+      "id": "bf6z",
+      "name": "厂长资源 (313ms)",
+      "api": "https://api.changzhang.tv/api.php/provide/vod",
+      "url": "https://api.changzhang.tv/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_28",
-      "name": "非凡资源 (961ms)",
-      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
-      "url": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "id": "mb31",
+      "name": "乐播资源 (327ms)",
+      "api": "https://lbapi9.com/api.php/provide/vod",
+      "url": "https://lbapi9.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_44",
-      "name": "茅台资源 (1024ms)",
-      "api": "https://caiji.maotaizy.cc/api.php/provide/vod",
-      "url": "https://caiji.maotaizy.cc/api.php/provide/vod",
+      "id": "sdzy",
+      "name": "闪电资源 (340ms)",
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
+      "url": "https://sdzyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
-      "id": "s_34",
-      "name": "量子资源 (1190ms)",
-      "api": "https://cj.lziapi.com/api.php/provide/vod",
-      "url": "https://cj.lziapi.com/api.php/provide/vod",
+      "id": "modu",
+      "name": "魔都资源 (386ms)",
+      "api": "https://mdzyapi.com/api.php/provide/vod/",
+      "url": "https://mdzyapi.com/api.php/provide/vod/",
       "type": "cms"
     },
     {
-      "id": "s_53",
-      "name": "优质资源库 (1386ms)",
+      "id": "kcuq",
+      "name": "大奶子资源 (414ms)",
+      "api": "https://apidanaizi.com/api.php/provide/vod",
+      "url": "https://apidanaizi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_94",
+      "name": "优质资源库 (418ms)",
       "api": "http://api.1080zyku.com/inc/api.php/provide/vod",
       "url": "http://api.1080zyku.com/inc/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_37",
-      "name": "如意资源 (1477ms)",
-      "api": "https://cj.rycjapi.com/api.php/provide/vod",
-      "url": "https://cj.rycjapi.com/api.php/provide/vod",
+      "id": "ngou",
+      "name": "嘿嘿资源 (431ms)",
+      "api": "https://api.heiapi.cc/api.php/provide/vod",
+      "url": "https://api.heiapi.cc/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_25",
-      "name": "爱奇艺资源 (1543ms)",
-      "api": "https://iqiyizyapi.com/api.php/provide/vod",
-      "url": "https://iqiyizyapi.com/api.php/provide/vod",
+      "id": "wja9",
+      "name": "奥斯卡资源 (439ms)",
+      "api": "https://aosikazy1.com/api.php/provide/vod",
+      "url": "https://aosikazy1.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_24",
-      "name": "艾旦影视 (1650ms)",
+      "id": "s_92",
+      "name": "量子資源 (460ms)",
+      "api": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
+      "url": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
+      "type": "cms"
+    },
+    {
+      "id": "gohx",
+      "name": "星夜资源站 (467ms)",
+      "api": "https://xyezy.com/api.php/provide/vod",
+      "url": "https://xyezy.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "o6ix",
+      "name": "番号资源 (486ms)",
+      "api": "http://fhapi9.com/api.php/provide/vod",
+      "url": "http://fhapi9.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "subo",
+      "name": "速博资源 (489ms)",
+      "api": "https://subocaiji.com/api.php/provide/vod/",
+      "url": "https://subocaiji.com/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "s_78",
+      "name": "艾旦影视 (508ms)",
       "api": "https://lovedan.net/api.php/provide/vod",
       "url": "https://lovedan.net/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_22",
-      "name": "360资源 (1742ms)",
+      "id": "s_135",
+      "name": "魔都 (525ms)",
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
+      "url": "https://caiji.moduapi.cc/api.php/provide/vod/",
+      "type": "cms"
+    },
+    {
+      "id": "s_77",
+      "name": "1080资源库 (558ms)",
+      "api": "https://api.1080zyku.com/inc/apijson.php",
+      "url": "https://api.1080zyku.com/inc/apijson.php",
+      "type": "cms"
+    },
+    {
+      "id": "symj",
+      "name": "猫眼资源 (576ms)",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "url": "https://api.maoyanapi.top/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "zcu7",
+      "name": "非凡资源 (658ms)",
+      "api": "http://api.ffzyapi.com/api.php/provide/vod",
+      "url": "http://api.ffzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_82",
+      "name": "非凡资源 (705ms)",
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "url": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "dkfm",
+      "name": "速播资源 (766ms)",
+      "api": "https://subocj.com/api.php/provide/vod",
+      "url": "https://subocj.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "6u18",
+      "name": "大地资源 (843ms)",
+      "api": "https://dadiapi.com/api.php/provide/vod",
+      "url": "https://dadiapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_84",
+      "name": "量子资源 (929ms)",
+      "api": "https://cj.lziapi.com/api.php/provide/vod",
+      "url": "https://cj.lziapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "l3gk",
+      "name": "桃花资源 (1040ms)",
+      "api": "https://thzy1.me/api.php/provide/vod",
+      "url": "https://thzy1.me/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "w9f7",
+      "name": "黑料资源 (1044ms)",
+      "api": "https://heiliaozyapi.com/api.php/provide/vod",
+      "url": "https://heiliaozyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "jih6",
+      "name": "吉吉资源 (1083ms)",
+      "api": "http://caiji.jjzyapi.com/api.php/provide/vod",
+      "url": "http://caiji.jjzyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_76",
+      "name": "360资源 (1165ms)",
       "api": "https://360zy.com/api.php/provide/vod",
       "url": "https://360zy.com/api.php/provide/vod",
       "type": "cms"
     },
     {
-      "id": "s_35",
-      "name": "猫眼资源 (1794ms)",
-      "api": "https://api.maoyanapi.top/api.php/provide/vod",
-      "url": "https://api.maoyanapi.top/api.php/provide/vod",
+      "id": "15c7",
+      "name": "樱花资源 (1188ms)",
+      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod",
+      "url": "https://m3u8.apiyhzy.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_85",
+      "name": "如意资源 (1256ms)",
+      "api": "https://cj.rycjapi.com/api.php/provide/vod",
+      "url": "https://cj.rycjapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "kjcl",
+      "name": "奶香香资源 (1305ms)",
+      "api": "https://naixxzy.com/api.php/provide/vod",
+      "url": "https://naixxzy.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "u4e5",
+      "name": "巨量资源 (1351ms)",
+      "api": "https://api.juliang.live/api/provide/vod",
+      "url": "https://api.juliang.live/api/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_79",
+      "name": "爱奇艺资源 (1441ms)",
+      "api": "https://iqiyizyapi.com/api.php/provide/vod",
+      "url": "https://iqiyizyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "bjwa",
+      "name": "爱奇艺影视 (1471ms)",
+      "api": "https://www.iqiyizyapi.com/api.php/provide/vod",
+      "url": "https://www.iqiyizyapi.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "830v",
+      "name": "母鸡资源 (1600ms)",
+      "api": "https://mujiziyuan00.com/api.php/provide/vod",
+      "url": "https://mujiziyuan00.com/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_90",
+      "name": "茅台资源 (3398ms)",
+      "api": "https://caiji.maotaizy.cc/api.php/provide/vod",
+      "url": "https://caiji.maotaizy.cc/api.php/provide/vod",
+      "type": "cms"
+    },
+    {
+      "id": "s_113",
+      "name": "闪电资源 (5880ms)",
+      "api": "http://sdzyapi.com/api.php/provide/vod",
+      "url": "http://sdzyapi.com/api.php/provide/vod",
       "type": "cms"
     }
   ],
@@ -364,249 +595,414 @@
       "api": "https://movie.douban.com/j/search_subjects",
       "detail": ""
     },
-    "jisu": {
-      "name": "极速资源 (170ms)",
-      "api": "https://jszyapi.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "s_95": {
-      "name": "最大 (171ms)",
-      "api": "http://zuidazy.me/api.php/provide/vod/",
-      "detail": ""
-    },
-    "s_29": {
-      "name": "光速资源 (201ms)",
-      "api": "https://api.guangsuapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_94": {
-      "name": "魔都 (204ms)",
-      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
-      "detail": ""
-    },
-    "tyys": {
-      "name": "天涯资源 (206ms)",
-      "api": "https://tyyszy.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "s_45": {
-      "name": "牛牛资源 (229ms)",
-      "api": "https://api.niuniuzy.me/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_48": {
-      "name": "丫丫资源 (240ms)",
-      "api": "https://cj.yayazy.net/api.php/provide/vod",
-      "detail": ""
-    },
-    "sdzy": {
-      "name": "闪电资源 (253ms)",
-      "api": "https://sdzyapi.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "IK": {
-      "name": "IK (261ms)",
-      "api": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
-      "detail": ""
-    },
-    "s_68": {
-      "name": "光速资源 (267ms)",
-      "api": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
-      "detail": ""
-    },
-    "s_26": {
-      "name": "百度资源 (269ms)",
-      "api": "https://api.apibdzy.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_40": {
-      "name": "最大资源 (270ms)",
-      "api": "https://api.zuidapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_46": {
-      "name": "索尼资源 (271ms)",
-      "api": "https://suoniapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_72": {
-      "name": "闪电资源 (274ms)",
-      "api": "http://sdzyapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_30": {
-      "name": "豪华资源 (289ms)",
-      "api": "https://hhzyapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_62": {
-      "name": "森林资源 (296ms)",
-      "api": "http://slapibf.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_50": {
-      "name": "紅牛資源 (302ms)",
-      "api": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
-      "detail": ""
-    },
-    "s_93": {
-      "name": "无尽 (304ms)",
-      "api": "https://api.wujinapi.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "s_31": {
-      "name": "红牛资源 (308ms)",
-      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_49": {
-      "name": "樱花资源 (339ms)",
-      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_42": {
-      "name": "U酷资源2 (344ms)",
-      "api": "https://api.ukuapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_36": {
-      "name": "魔都资源 (348ms)",
-      "api": "https://www.mdzyapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_41": {
-      "name": "U酷资源 (369ms)",
-      "api": "https://api.ukuapi88.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "hongniu": {
-      "name": "红牛资源 (376ms)",
-      "api": "https://hongniuzy2.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "jinying": {
-      "name": "金鹰资源 (383ms)",
-      "api": "https://jinyingzy.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "ikun": {
-      "name": "爱坤资源 (448ms)",
-      "api": "https://ikunzyapi.com/api.php/provide/vod/",
-      "detail": ""
-    },
-    "s_32": {
-      "name": "虎牙资源 (464ms)",
-      "api": "https://www.huyaapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_27": {
-      "name": "电影天堂 (468ms)",
-      "api": "https://caiji.dyttzyapi.com/api.php/provide/vod",
-      "detail": ""
-    },
-    "s_33": {
-      "name": "金鹰资源 (500ms)",
-      "api": "https://jyzyapi.com/provide/vod",
-      "detail": ""
-    },
-    "s_39": {
-      "name": "新浪资源 (502ms)",
-      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
-      "detail": ""
-    },
-    "s_66": {
-      "name": "閃電資源 (503ms)",
-      "api": "http://sdzyapi.com/api.php/provide/vod/from/sdm3u8",
-      "detail": ""
-    },
-    "s_51": {
-      "name": "量子資源 (524ms)",
-      "api": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
-      "detail": ""
-    },
-    "s_67": {
-      "name": "金鹰资源 (538ms)",
+    "s_108": {
+      "name": "金鹰资源 (32ms)",
       "api": "http://jyzyapi.com/provide/vod/from/jinyingm3u8",
       "detail": ""
     },
-    "modu": {
-      "name": "魔都资源 (573ms)",
-      "api": "https://mdzyapi.com/api.php/provide/vod/",
+    "w5yx": {
+      "name": "无尽资源 (76ms)",
+      "api": "https://api.wujinapi.me/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_81": {
+      "name": "电影天堂 (79ms)",
+      "api": "https://caiji.dyttzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "IK": {
+      "name": "IK (93ms)",
+      "api": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
+      "detail": ""
+    },
+    "jisu": {
+      "name": "极速资源 (102ms)",
+      "api": "https://jszyapi.com/api.php/provide/vod/",
       "detail": ""
     },
     "bfzy": {
-      "name": "暴风资源 (575ms)",
+      "name": "暴风资源 (105ms)",
       "api": "https://bfzyapi.com/api.php/provide/vod/",
       "detail": ""
     },
-    "s_47": {
-      "name": "天涯影视 (638ms)",
+    "yzsh": {
+      "name": "CK伦理资源 (106ms)",
+      "api": "https://ckzy.me/api.php/provide/vod",
+      "detail": ""
+    },
+    "3s1g": {
+      "name": "最大资源 (107ms)",
+      "api": "https://api.zuidapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_83": {
+      "name": "金鹰资源 (107ms)",
+      "api": "https://jyzyapi.com/provide/vod",
+      "detail": ""
+    },
+    "2vic": {
+      "name": "光速资源 (108ms)",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "5pxf": {
+      "name": "jkun资源 (115ms)",
+      "api": "https://jkunzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "14er": {
+      "name": "索尼资源 (118ms)",
+      "api": "https://suoniapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "hongniu": {
+      "name": "红牛资源 (126ms)",
+      "api": "https://hongniuzy2.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "s_91": {
+      "name": "紅牛資源 (128ms)",
+      "api": "http://hongniuzy2.com/api.php/provide/vod/from/hnm3u8",
+      "detail": ""
+    },
+    "s_87": {
+      "name": "U酷资源 (135ms)",
+      "api": "https://api.ukuapi88.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_109": {
+      "name": "光速资源 (135ms)",
+      "api": "http://api.guangsuapi.com/api.php/provide/vod/from/gsm3u8",
+      "detail": ""
+    },
+    "eup8": {
+      "name": "红牛资源 (138ms)",
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "ulwt": {
+      "name": "免费资源站 (139ms)",
+      "api": "https://yuanlib.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_88": {
+      "name": "U酷资源2 (143ms)",
+      "api": "https://api.ukuapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "pf75": {
+      "name": "快车资源 (149ms)",
+      "api": "https://caiji.kuaichezy.org/api.php/provide/vod",
+      "detail": ""
+    },
+    "9mvo": {
+      "name": "黄色仓库 (150ms)",
+      "api": "https://hsckzy888.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "45tu": {
+      "name": "搜av资源 (153ms)",
+      "api": "https://api.souavzyw.net/api.php/provide/vod",
+      "detail": ""
+    },
+    "jinying": {
+      "name": "金鹰资源 (163ms)",
+      "api": "https://jinyingzy.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "5jr5": {
+      "name": "牛牛资源 (164ms)",
+      "api": "https://api.niuniuzy.me/api.php/provide/vod",
+      "detail": ""
+    },
+    "14ib": {
+      "name": "鸭鸭资源 (166ms)",
+      "api": "https://cj.yayazy.net/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_136": {
+      "name": "最大 (169ms)",
+      "api": "http://zuidazy.me/api.php/provide/vod/",
+      "detail": ""
+    },
+    "302o": {
+      "name": "ok资源站 (170ms)",
+      "api": "http://api.okzyw.net/api.php/provide/vod",
+      "detail": ""
+    },
+    "fbgg": {
+      "name": "魔都资源 (171ms)",
+      "api": "https://www.mdzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "e62g": {
+      "name": "老色P资源 (172ms)",
+      "api": "https://apilsbzy1.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "ijnf": {
+      "name": "无水印资源 (182ms)",
+      "api": "https://api.wsyzy.net/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_80": {
+      "name": "百度资源 (182ms)",
+      "api": "https://api.apibdzy.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "auej": {
+      "name": "虎牙资源 (183ms)",
+      "api": "https://www.huyaapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "f0ly": {
+      "name": "玉兔资源 (196ms)",
+      "api": "https://apiyutu.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "yn14": {
+      "name": "天涯资源 (197ms)",
       "api": "https://tyyszyapi.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_23": {
-      "name": "1080资源库 (668ms)",
-      "api": "https://api.1080zyku.com/inc/apijson.php",
+    "h36r": {
+      "name": "西瓜资源 (208ms)",
+      "api": "https://caiji.xgzyapi.com/api.php/provide/vod",
       "detail": ""
     },
-    "subo": {
-      "name": "速博资源 (684ms)",
-      "api": "https://subocaiji.com/api.php/provide/vod/",
+    "hh0f": {
+      "name": "芒果资源 (209ms)",
+      "api": "https://caiji.mgzyapi.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_69": {
-      "name": "奥斯卡资源网 (763ms)",
+    "ikun": {
+      "name": "爱坤资源 (211ms)",
+      "api": "https://ikunzyapi.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "s_86": {
+      "name": "新浪资源 (212ms)",
+      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
+      "detail": ""
+    },
+    "cofx": {
+      "name": "360资源 (232ms)",
+      "api": "https://360zyzz.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "tyys": {
+      "name": "天涯资源 (240ms)",
+      "api": "https://tyyszy.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "3cuj": {
+      "name": "豆豆资源 (243ms)",
+      "api": "https://api.douapi.cc/api.php/provide/vod",
+      "detail": ""
+    },
+    "dk0j": {
+      "name": "火速资源 (245ms)",
+      "api": "https://api.huosuapi.cc/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_134": {
+      "name": "无尽 (256ms)",
+      "api": "https://api.wujinapi.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "plnd": {
+      "name": "电影天堂资源 (259ms)",
+      "api": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "hc4c": {
+      "name": "红楼资源 (261ms)",
+      "api": "https://www.hlzyapi.vip/api.php/provide/vod",
+      "detail": ""
+    },
+    "qvci": {
+      "name": "豪华资源 (274ms)",
+      "api": "https://hhzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_103": {
+      "name": "森林资源 (285ms)",
+      "api": "http://slapibf.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_110": {
+      "name": "奥斯卡资源网 (296ms)",
       "api": "http://aosikazy.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_38": {
-      "name": "速播资源 (923ms)",
-      "api": "https://subocj.com/api.php/provide/vod",
+    "bf6z": {
+      "name": "厂长资源 (313ms)",
+      "api": "https://api.changzhang.tv/api.php/provide/vod",
       "detail": ""
     },
-    "s_28": {
-      "name": "非凡资源 (961ms)",
-      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
+    "mb31": {
+      "name": "乐播资源 (327ms)",
+      "api": "https://lbapi9.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_44": {
-      "name": "茅台资源 (1024ms)",
-      "api": "https://caiji.maotaizy.cc/api.php/provide/vod",
+    "sdzy": {
+      "name": "闪电资源 (340ms)",
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
       "detail": ""
     },
-    "s_34": {
-      "name": "量子资源 (1190ms)",
-      "api": "https://cj.lziapi.com/api.php/provide/vod",
+    "modu": {
+      "name": "魔都资源 (386ms)",
+      "api": "https://mdzyapi.com/api.php/provide/vod/",
       "detail": ""
     },
-    "s_53": {
-      "name": "优质资源库 (1386ms)",
+    "kcuq": {
+      "name": "大奶子资源 (414ms)",
+      "api": "https://apidanaizi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_94": {
+      "name": "优质资源库 (418ms)",
       "api": "http://api.1080zyku.com/inc/api.php/provide/vod",
       "detail": ""
     },
-    "s_37": {
-      "name": "如意资源 (1477ms)",
-      "api": "https://cj.rycjapi.com/api.php/provide/vod",
+    "ngou": {
+      "name": "嘿嘿资源 (431ms)",
+      "api": "https://api.heiapi.cc/api.php/provide/vod",
       "detail": ""
     },
-    "s_25": {
-      "name": "爱奇艺资源 (1543ms)",
-      "api": "https://iqiyizyapi.com/api.php/provide/vod",
+    "wja9": {
+      "name": "奥斯卡资源 (439ms)",
+      "api": "https://aosikazy1.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_24": {
-      "name": "艾旦影视 (1650ms)",
+    "s_92": {
+      "name": "量子資源 (460ms)",
+      "api": "http://cj.lziapi.com/api.php/provide/vod/from/lzm3u8",
+      "detail": ""
+    },
+    "gohx": {
+      "name": "星夜资源站 (467ms)",
+      "api": "https://xyezy.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "o6ix": {
+      "name": "番号资源 (486ms)",
+      "api": "http://fhapi9.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "subo": {
+      "name": "速博资源 (489ms)",
+      "api": "https://subocaiji.com/api.php/provide/vod/",
+      "detail": ""
+    },
+    "s_78": {
+      "name": "艾旦影视 (508ms)",
       "api": "https://lovedan.net/api.php/provide/vod",
       "detail": ""
     },
-    "s_22": {
-      "name": "360资源 (1742ms)",
+    "s_135": {
+      "name": "魔都 (525ms)",
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
+      "detail": ""
+    },
+    "s_77": {
+      "name": "1080资源库 (558ms)",
+      "api": "https://api.1080zyku.com/inc/apijson.php",
+      "detail": ""
+    },
+    "symj": {
+      "name": "猫眼资源 (576ms)",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "detail": ""
+    },
+    "zcu7": {
+      "name": "非凡资源 (658ms)",
+      "api": "http://api.ffzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_82": {
+      "name": "非凡资源 (705ms)",
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "dkfm": {
+      "name": "速播资源 (766ms)",
+      "api": "https://subocj.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "6u18": {
+      "name": "大地资源 (843ms)",
+      "api": "https://dadiapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_84": {
+      "name": "量子资源 (929ms)",
+      "api": "https://cj.lziapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "l3gk": {
+      "name": "桃花资源 (1040ms)",
+      "api": "https://thzy1.me/api.php/provide/vod",
+      "detail": ""
+    },
+    "w9f7": {
+      "name": "黑料资源 (1044ms)",
+      "api": "https://heiliaozyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "jih6": {
+      "name": "吉吉资源 (1083ms)",
+      "api": "http://caiji.jjzyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_76": {
+      "name": "360资源 (1165ms)",
       "api": "https://360zy.com/api.php/provide/vod",
       "detail": ""
     },
-    "s_35": {
-      "name": "猫眼资源 (1794ms)",
-      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+    "15c7": {
+      "name": "樱花资源 (1188ms)",
+      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_85": {
+      "name": "如意资源 (1256ms)",
+      "api": "https://cj.rycjapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "kjcl": {
+      "name": "奶香香资源 (1305ms)",
+      "api": "https://naixxzy.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "u4e5": {
+      "name": "巨量资源 (1351ms)",
+      "api": "https://api.juliang.live/api/provide/vod",
+      "detail": ""
+    },
+    "s_79": {
+      "name": "爱奇艺资源 (1441ms)",
+      "api": "https://iqiyizyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "bjwa": {
+      "name": "爱奇艺影视 (1471ms)",
+      "api": "https://www.iqiyizyapi.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "830v": {
+      "name": "母鸡资源 (1600ms)",
+      "api": "https://mujiziyuan00.com/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_90": {
+      "name": "茅台资源 (3398ms)",
+      "api": "https://caiji.maotaizy.cc/api.php/provide/vod",
+      "detail": ""
+    },
+    "s_113": {
+      "name": "闪电资源 (5880ms)",
+      "api": "http://sdzyapi.com/api.php/provide/vod",
       "detail": ""
     }
   }
