@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import html
 import json
@@ -46,6 +46,7 @@ def load_or_init_source_registry(settings, seeds, dead_hosts):
         "vod_sources": [],
         "cms_apis": [],
         "discovery_pages": list(seeds.get("discovery_pages", [])),
+        "dynamic_vod_groups": {},
     }
     if os.path.exists(reg_file):
         try:
@@ -63,6 +64,21 @@ def load_or_init_source_registry(settings, seeds, dead_hosts):
 
     purged_set = set(purged_existing)
     registry["purged_seeds"] = sorted(purged_set)
+    if not isinstance(registry.get("dynamic_vod_groups"), dict):
+        registry["dynamic_vod_groups"] = {}
+
+    # 将上一轮沉淀的 dynamic_vod_groups 合并回 seeds["tvbox_vod_groups"]
+    for grp in seeds.get("tvbox_vod_groups", []):
+        gid = canonical_cache_id(grp.get("id") or grp.get("name") or "")
+        dyn_urls = registry["dynamic_vod_groups"].get(gid, [])
+        if isinstance(dyn_urls, list) and dyn_urls:
+            merged_u = []
+            for u in dyn_urls + grp.get("urls", []):
+                cu = sanitize_discovered_url(u, dead_hosts)
+                if cu and cu not in purged_set and cu not in merged_u:
+                    merged_u.append(cu)
+            if merged_u:
+                grp["urls"] = merged_u[:8]
 
     live_map = {}
     for item in registry.get("live_sources", []):
@@ -160,11 +176,11 @@ def save_source_registry(registry, tag, settings):
     reg_cfg = settings.get("registry", {})
     reg_file = reg_cfg.get("file", "source_registry.json")
     max_disc_fail = int(reg_cfg.get("max_discovered_fail_streak", 3))
-    max_seed_suspend = int(reg_cfg.get("max_seed_suspend_streak", 4))
+    max_seed_suspend = int(reg_cfg.get("max_seed_suspend_streak", 6))
     purge_streak = int(reg_cfg.get("purge_seed_fail_streak", 15))
     max_live_cap = int(reg_cfg.get("max_live_sources_cap", 60))
     max_vod_cap = int(reg_cfg.get("max_vod_sources_cap", 80))
-    max_cms_cap = int(reg_cfg.get("max_cms_apis_cap", 150))
+    max_cms_cap = int(reg_cfg.get("max_cms_apis_cap", 180))
     purged_set = set(registry.get("purged_seeds", []))
 
     def prune_urls(items, cap, check_yield=False):
@@ -234,6 +250,28 @@ def save_source_registry(registry, tag, settings):
     )
 
 
+def _extract_multi_repo_entries(multi_urls, dead_hosts):
+    corpus_blocks = []
+    for multi_url in multi_urls:
+        try:
+            data = parse_json_lenient(
+                fetch_url_text(multi_url, timeout=8, prefer_okhttp=True)
+            )
+            entries = (
+                (data.get("urls") or data.get("订阅") or [])
+                if isinstance(data, dict)
+                else []
+            )
+            for item in entries:
+                if isinstance(item, dict):
+                    clean_u = sanitize_discovered_url(item.get("url", ""), dead_hosts)
+                    if item.get("name") and clean_u and not is_invalid_site_url(clean_u):
+                        corpus_blocks.append((str(item["name"]).lower(), clean_u))
+        except Exception:
+            pass
+    return corpus_blocks
+
+
 def sync_famous_vod_urls_from_nav(seeds, dead_hosts):
     corpus_blocks = []
     for nav_url in seeds.get("famous_nav_pages", []):
@@ -257,23 +295,7 @@ def sync_famous_vod_urls_from_nav(seeds, dead_hosts):
         except Exception as e:
             print(f"知名导航页读取跳过: {nav_url} -> {e}")
 
-    for multi_url in seeds.get("multi_repo_urls", []):
-        try:
-            data = parse_json_lenient(
-                fetch_url_text(multi_url, timeout=8, prefer_okhttp=True)
-            )
-            entries = (
-                (data.get("urls") or data.get("订阅") or [])
-                if isinstance(data, dict)
-                else []
-            )
-            for item in entries:
-                if isinstance(item, dict):
-                    clean_u = sanitize_discovered_url(item.get("url", ""), dead_hosts)
-                    if item.get("name") and clean_u and not is_invalid_site_url(clean_u):
-                        corpus_blocks.append((str(item["name"]).lower(), clean_u))
-        except Exception:
-            pass
+    corpus_blocks.extend(_extract_multi_repo_entries(seeds.get("multi_repo_urls", []), dead_hosts))
 
     if not corpus_blocks:
         return
@@ -294,6 +316,37 @@ def sync_famous_vod_urls_from_nav(seeds, dead_hosts):
         print(f"定向动态寻址完成：已为 {', '.join(added_summary)} 补充最新候选")
 
 
+def _discover_github_active_repos(purged_set, existing_pages):
+    """利用 GitHub Search API 自动发现近 30 天内活跃更新的 TVBox / IPTV 仓库主页"""
+    since_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    queries = [
+        f"tvbox pushed:>{since_date} stars:>=5",
+        f"iptv m3u pushed:>{since_date} stars:>=10",
+    ]
+    found_pages = []
+    for q in queries:
+        try:
+            api_url = (
+                "https://api.github.com/search/repositories?q="
+                + urllib.parse.quote(q)
+                + "&sort=updated&order=desc&per_page=8"
+            )
+            data = parse_json_lenient(fetch_url_text(api_url, timeout=8))
+            items = data.get("items", []) if isinstance(data, dict) else []
+            for repo in items:
+                if not isinstance(repo, dict) or repo.get("archived") or repo.get("disabled"):
+                    continue
+                full_name = str(repo.get("full_name", "")).strip()
+                if not full_name or "hmz0123/" in full_name.lower():
+                    continue
+                repo_url = f"https://github.com/{full_name}"
+                if repo_url not in purged_set and repo_url not in existing_pages:
+                    found_pages.append(repo_url)
+        except Exception:
+            pass
+    return list(dict.fromkeys(found_pages))[:3]
+
+
 def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_texts=None):
     max_disc = int(settings.get("registry", {}).get("max_new_discoveries_per_run", 15))
     purged_set = set(registry.get("purged_seeds", []))
@@ -301,7 +354,15 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
     existing_vod = {x["url"] for x in registry.get("vod_sources", [])}
     existing_cms = {x["api"].rstrip("/") for x in registry.get("cms_apis", [])}
 
-    pages = list(dict.fromkeys(registry.get("discovery_pages", [])))[:15]
+    pages = list(dict.fromkeys(registry.get("discovery_pages", [])))
+    if extra_texts is None and len(pages) < 25:
+        gh_new = _discover_github_active_repos(purged_set, set(pages))
+        if gh_new:
+            pages.extend(gh_new)
+            registry["discovery_pages"] = list(dict.fromkeys(pages))
+            print(f"GitHub 活跃仓库自动巡检新增 {len(gh_new)} 个发现源: {', '.join(gh_new)}")
+
+    pages = pages[:18]
 
     def _safe_fetch_discovery_page(page_u):
         try:
@@ -339,7 +400,7 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
                 lower_u.endswith(".json")
                 and any(
                     h in lower_u
-                    for h in ("raw.githubusercontent.com", "gitee.com", "kstore.")
+                    for h in ("raw.githubusercontent.com", "gitee.com", "kstore.", "jihulab.com", "gitea.com")
                 )
                 and u not in existing_vod
             ):
@@ -353,32 +414,22 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
 
     if extra_texts is None:
         pool = list(seeds.get("multi_repo_urls", [])) + (
-            random.sample(discovered_multi, min(2, len(discovered_multi)))
+            random.sample(discovered_multi, min(3, len(discovered_multi)))
             if discovered_multi
             else []
         )
-        for mu in dict.fromkeys(pool):
-            try:
-                data = parse_json_lenient(fetch_url_text(mu, timeout=8, prefer_okhttp=True))
-                entries = (
-                    (data.get("urls") or data.get("订阅") or [])
-                    if isinstance(data, dict)
-                    else []
-                )
-                for it in entries:
-                    if isinstance(it, dict):
-                        sub_u = sanitize_discovered_url(it.get("url", ""), dead_hosts)
-                        if (
-                            sub_u
-                            and sub_u not in purged_set
-                            and not is_invalid_site_url(sub_u)
-                            and "xhztv.top/xhz" not in sub_u
-                            and sub_u not in existing_vod
-                        ):
-                            existing_vod.add(sub_u)
-                            new_vod.append(sub_u)
-            except Exception:
-                pass
+        multi_entries = _extract_multi_repo_entries(list(dict.fromkeys(pool)), dead_hosts)
+        # 多仓反向裂变：同步把匹配关键词的新地址注入主力分组并收录进新点播源
+        for lbl, sub_u in multi_entries:
+            if sub_u in purged_set or "xhztv.top/xhz" in sub_u:
+                continue
+            for grp in seeds.get("tvbox_vod_groups", []):
+                kws = [k.lower() for k in grp.get("keywords", [grp["name"]])]
+                if any(k in lbl for k in kws) and sub_u not in grp.get("urls", []):
+                    grp["urls"] = [sub_u] + grp.get("urls", [])
+            if sub_u not in existing_vod:
+                existing_vod.add(sub_u)
+                new_vod.append(sub_u)
 
     return new_live[:max_disc], new_vod[:max_disc], new_cms[:max_disc]
 
@@ -466,7 +517,7 @@ def collect_vod_and_update_registry(
     now_str = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     cache_dir = settings.get("cache_dir", "cache")
     reg_cfg = settings.get("registry", {})
-    max_seed_suspend = int(reg_cfg.get("max_seed_suspend_streak", 4))
+    max_seed_suspend = int(reg_cfg.get("max_seed_suspend_streak", 6))
     max_disc_fail = int(reg_cfg.get("max_discovered_fail_streak", 3))
     purged_set = set(registry.get("purged_seeds", []))
     junk_kws = rules.get("junk_keywords", [])
@@ -487,6 +538,7 @@ def collect_vod_and_update_registry(
                     "last_ok_at": "",
                 }
             )
+            existing_vod.add(u)
 
     cms_map = {
         x["api"].rstrip("/"): dict(x)
@@ -510,44 +562,68 @@ def collect_vod_and_update_registry(
                 },
             )
 
+    # 修复 backup_map 映射断裂：确保每个主力分组至少有一条入口在 vod_items 中，且组内任意 URL 均可匹配整组候选
     backup_map = {}
     canonical_ids = []
     for g in seeds.get("tvbox_vod_groups", []):
-        if g.get("urls"):
-            cid = canonical_cache_id(g.get("id") or g.get("name") or "src")
-            canonical_ids.append(cid)
-            backup_map[g["urls"][0]] = (cid, g.get("name", cid), g["urls"])
+        g_urls = [u for u in g.get("urls", []) if u and u not in purged_set]
+        if not g_urls:
+            continue
+        cid = canonical_cache_id(g.get("id") or g.get("name") or "src")
+        canonical_ids.append(cid)
+        entry_tuple = (cid, g.get("name", cid), g_urls)
+        for gu in g_urls:
+            backup_map[gu] = entry_tuple
+        if not any(gu in existing_vod for gu in g_urls):
+            primary_u = g_urls[0]
+            vod_items.append(
+                {
+                    "url": primary_u,
+                    "origin": "seed",
+                    "fail_streak": 0,
+                    "latency": 999,
+                    "valid_items": 0,
+                    "yield_rate": 1.0,
+                    "last_ok_at": "",
+                }
+            )
+            existing_vod.add(primary_u)
 
     _cleanup_alias_cache_files(cache_dir, canonical_ids)
 
     tvbox_base, extra_sites, all_parses, raw_texts, source_stats = {}, [], [], [], []
     seen_repo_fps = []
+    processed_groups = set()
+    dyn_groups = registry.get("dynamic_vod_groups")
+    if not isinstance(dyn_groups, dict):
+        dyn_groups = {}
 
     vod_sorted = sorted(
         vod_items,
         key=lambda x: (x["url"] not in backup_map, x.get("origin") != "seed"),
     )
     for idx, src in enumerate(vod_sorted):
-        if (
-            src.get("origin") == "seed"
-            and int(src.get("fail_streak", 0)) >= max_seed_suspend
-            and idx % 2 == 1
-        ):
-            continue
         url = src["url"]
         is_prio = url in backup_map
-        sid, sname, candidates = (
-            backup_map[url]
-            if is_prio
-            else (
+        if is_prio:
+            sid, sname, candidates = backup_map[url]
+            if sid in processed_groups:
+                continue
+            processed_groups.add(sid)
+        else:
+            if (
+                src.get("origin") == "seed"
+                and int(src.get("fail_streak", 0)) >= max_seed_suspend
+                and idx % 2 == 1
+            ):
+                continue
+            sid = (
                 re.sub(
                     r"[^a-zA-Z0-9]", "", urllib.parse.urlsplit(url).netloc
                 )[:12]
-                or "src",
-                url.split("/")[-1],
-                [url],
+                or "src"
             )
-        )
+            sname, candidates = url.split("/")[-1], [url]
 
         fetched = None
         for c_idx, cand_u in enumerate(candidates):
@@ -576,6 +652,12 @@ def collect_vod_and_update_registry(
                                 ensure_ascii=False,
                                 indent=2,
                             )
+                        # 将本轮实际跑通的 cand_u 置顶写入 dynamic_vod_groups 持久化自愈
+                        prev_dyn = dyn_groups.get(sid, [])
+                        merged_dyn = [cand_u] + [
+                            u for u in (prev_dyn + candidates) if u != cand_u and u not in purged_set
+                        ]
+                        dyn_groups[sid] = merged_dyn[:6]
                     fetched = (cand_u, lat, raw_txt, data, False)
                     break
             except Exception:
@@ -714,6 +796,7 @@ def collect_vod_and_update_registry(
                 }
             )
 
+    registry["dynamic_vod_groups"] = dyn_groups
     registry["vod_sources"] = vod_sorted
     return cms_map, tvbox_base, extra_sites, all_parses, raw_texts, source_stats
 
