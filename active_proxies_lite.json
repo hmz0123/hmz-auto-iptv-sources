@@ -1,0 +1,53 @@
+[
+  {
+    "order": 1,
+    "discovery_order": 1,
+    "name": "🚀代理全量1 ✅448ms·725KB/s",
+    "lite_name": "⚡代理精简1 ✅448ms·725KB/s",
+    "pan_name": "💎代理网盘1 ✅448ms·725KB/s",
+    "prefix": "https://gh-proxy.com/",
+    "url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json",
+    "lite_url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json",
+    "pan_url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json",
+    "latency": 448,
+    "speed_kbs": 725.7,
+    "verified": true,
+    "fail_streak": 0,
+    "degraded": false,
+    "last_ok_at": "2026-11-27T04:21:24Z"
+  },
+  {
+    "order": 2,
+    "discovery_order": 2,
+    "name": "🚀代理全量2 ✅448ms·725KB/s",
+    "lite_name": "⚡代理精简2 ✅448ms·725KB/s",
+    "pan_name": "💎代理网盘2 ✅448ms·725KB/s",
+    "prefix": "https://cdn.gh-proxy.org/",
+    "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json",
+    "lite_url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json",
+    "pan_url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json",
+    "latency": 448,
+    "speed_kbs": 725.2,
+    "verified": true,
+    "fail_streak": 0,
+    "degraded": false,
+    "last_ok_at": "2026-11-27T04:21:24Z"
+  },
+  {
+    "order": 7,
+    "discovery_order": 7,
+    "name": "🚀代理全量7 ✅458ms·691KB/s",
+    "lite_name": "⚡代理精简7 ✅458ms·691KB/s",
+    "pan_name": "💎代理网盘7 ✅458ms·691KB/s",
+    "prefix": "https://gh-proxy.org/",
+    "url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json",
+    "lite_url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json",
+    "pan_url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json",
+    "latency": 458,
+    "speed_kbs": 691.4,
+    "verified": true,
+    "fail_streak": 0,
+    "degraded": false,
+    "last_ok_at": "2026-11-27T04:21:24Z"
+  }
+]

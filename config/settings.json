@@ -1,0 +1,126 @@
+{
+  "repo_owner_path": "hmz0123/hmz-auto-iptv-sources",
+  "cache_dir": "cache",
+  "jars_dir": "jars",
+  "max_mirror_jar_bytes": 2621440,
+  "max_mirrored_jars": 18,
+  "urls": {
+    "upstream_spider": "https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar",
+    "ziyuanzu_cms": "https://www.ziyuanzu.com/download/ziyuanzu-cms-interfaces.json",
+    "live_epg": "https://epg.112114.xyz/",
+    "live_logo": "https://epg.112114.xyz/logo/{name}.png",
+    "cf_domains": [
+      "https://tv.hmz0123.eu.cc",
+      "https://tv.wlglb.dpdns.org",
+      "https://tv.xzgd.cc.cd",
+      "https://tv.xztvzzb.us.ci"
+    ]
+  },
+  "thresholds": {
+    "timeout": 6,
+    "live_timeout": 5,
+    "stream_timeout": 4,
+    "max_workers": 24,
+    "cms_workers": 18,
+    "min_valid_live_channels": 20,
+    "min_live_slice_speed_kbs": 120,
+    "max_streams_per_channel": 6,
+    "max_live_channels": 1500,
+    "min_valid_cms_sites": 5,
+    "max_cms_sites": 120,
+    "min_quality_gate_full_sites": 30,
+    "min_quality_gate_pan_sites": 3
+  },
+  "editions": {
+    "lite_max_source_latency": 1200,
+    "lite_max_cms_latency": 900,
+    "lite_max_cms_sites": 25,
+    "lite_max_pan_sites": 25,
+    "lite_max_extra_spider_sites": 25,
+    "lite_cms_speedtest_top_n": 16,
+    "lite_min_seg_speed_kbs": 150,
+    "pan_edition_max_sites": 80,
+    "pan_quick_search_top_n": 12
+  },
+  "pinned": {
+    "home_prefer_cms_keywords": ["索尼", "非凡", "量子", "暴风", "360"],
+    "cms_keywords": ["索尼", "非凡", "量子", "暴风", "360", "ikun", "极速", "豪华", "红牛", "光速"],
+    "pan_keywords": ["玩偶", "木偶", "wogg", "mogg", "至臻", "蜡笔", "二小", "欧歌", "libvio"],
+    "quick_search_top_n": 12
+  },
+  "registry": {
+    "file": "source_registry.json",
+    "max_new_discoveries_per_run": 15,
+    "max_discovered_fail_streak": 3,
+    "max_seed_suspend_streak": 4,
+    "purge_seed_fail_streak": 15,
+    "purge_seed_fail_days": 15,
+    "max_live_sources_cap": 60,
+    "max_vod_sources_cap": 80,
+    "max_cms_apis_cap": 150
+  },
+  "proxy": {
+    "list_file": "active_proxies.json",
+    "lite_file": "active_proxies_lite.json",
+    "target_count": 10,
+    "lite_count": 3,
+    "max_fail_streak": 3,
+    "min_speed_kbs": 50.0
+  },
+  "default_live_player_type": 2,
+  "default_player_flags": [
+    "youku",
+    "qq",
+    "iqiyi",
+    "qiyi",
+    "letv",
+    "sohu",
+    "tudou",
+    "pptv",
+    "mgtv",
+    "wasu",
+    "bilibili"
+  ],
+  "default_ijk_config": [
+    {
+      "group": "硬解码",
+      "options": [
+        { "category": 4, "name": "opensles", "value": "0" },
+        { "category": 4, "name": "overlay-format", "value": "842225234" },
+        { "category": 4, "name": "framedrop", "value": "1" },
+        { "category": 4, "name": "soundtouch", "value": "1" },
+        { "category": 4, "name": "start-on-prepared", "value": "1" },
+        { "category": 1, "name": "http-detect-range-support", "value": "0" },
+        { "category": 1, "name": "fflags", "value": "fastseek" },
+        { "category": 2, "name": "skip_loop_filter", "value": "48" },
+        { "category": 4, "name": "reconnect", "value": "1" },
+        { "category": 4, "name": "enable-accurate-seek", "value": "0" },
+        { "category": 4, "name": "mediacodec", "value": "1" },
+        { "category": 4, "name": "mediacodec-auto-rotate", "value": "1" },
+        { "category": 4, "name": "mediacodec-handle-resolution-change", "value": "1" },
+        { "category": 4, "name": "mediacodec-hevc", "value": "1" },
+        { "category": 4, "name": "max-buffer-size", "value": "5242880" }
+      ]
+    },
+    {
+      "group": "软解码",
+      "options": [
+        { "category": 4, "name": "opensles", "value": "0" },
+        { "category": 4, "name": "overlay-format", "value": "842225234" },
+        { "category": 4, "name": "framedrop", "value": "1" },
+        { "category": 4, "name": "soundtouch", "value": "1" },
+        { "category": 4, "name": "start-on-prepared", "value": "1" },
+        { "category": 1, "name": "http-detect-range-support", "value": "0" },
+        { "category": 1, "name": "fflags", "value": "fastseek" },
+        { "category": 2, "name": "skip_loop_filter", "value": "48" },
+        { "category": 4, "name": "reconnect", "value": "1" },
+        { "category": 4, "name": "enable-accurate-seek", "value": "0" },
+        { "category": 4, "name": "mediacodec", "value": "0" },
+        { "category": 4, "name": "mediacodec-auto-rotate", "value": "0" },
+        { "category": 4, "name": "mediacodec-handle-resolution-change", "value": "0" },
+        { "category": 4, "name": "mediacodec-hevc", "value": "0" },
+        { "category": 4, "name": "max-buffer-size", "value": "5242880" }
+      ]
+    }
+  ]
+}

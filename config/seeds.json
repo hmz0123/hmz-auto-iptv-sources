@@ -1,0 +1,252 @@
+{
+  "discovery_pages": [
+    "https://github.com/fanmingming/live",
+    "https://github.com/YueChan/Live",
+    "https://github.com/suxuang/myIPTV",
+    "https://github.com/iptv-org/iptv",
+    "https://github.com/gaotianliuyun/gao",
+    "https://github.com/yoursmile66/TVBox",
+    "https://github.com/FongMi/CatVodSpider",
+    "https://github.com/q215613905/TVBoxOS",
+    "https://github.com/2hacc/TVBox",
+    "https://github.com/o0HalfLife0o/TVBoxOSC",
+    "https://github.com/YiMing918/ym-tvbox",
+    "https://github.com/Lightconer/tvbox-ysc-config"
+  ],
+  "famous_nav_pages": [
+    "https://www.tvbox.one/",
+    "https://tvbox.clbug.com/",
+    "https://www.饭太硬.com/",
+    "http://www.饭太硬.com/",
+    "https://xhztv.top/"
+  ],
+  "live_source_urls": [
+    "https://live.fanmingming.com/tv/m3u/ipv6.m3u",
+    "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
+    "https://raw.githubusercontent.com/YueChan/Live/main/IPTV.m3u",
+    "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv6.m3u",
+    "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
+    "https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u",
+    "https://raw.githubusercontent.com/Kimentanm/aptv/master/m3u/iptv.m3u",
+    "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u",
+    "https://raw.githubusercontent.com/ssili126/tv/main/itvlist.m3u",
+    "https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/main/merged_output.m3u",
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/hk.m3u",
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/tw.m3u",
+    "https://live.zbds.top/tv/iptv4.txt",
+    "https://live.zbds.top/tv/iptv6.txt"
+  ],
+  "multi_repo_urls": [
+    "https://raw.githubusercontent.com/gaotianliuyun/gao/master/9918.json",
+    "https://raw.githubusercontent.com/2hacc/TVBox/main/dc.json",
+    "https://raw.githubusercontent.com/q215613905/TVBoxOS/main/api.json",
+    "https://www.agit.ai/Yoursmile7/TVBox/raw/branch/master/XC.json",
+    "http://rihou.cc:55/lib/kx2024.txt"
+  ],
+  "tvbox_vod_groups": [
+    {
+      "id": "ym_tvbox",
+      "name": "YM精选合并仓",
+      "keywords": ["ym-tvbox", "peter", "ym"],
+      "urls": [
+        "https://raw.githubusercontent.com/YiMing918/ym-tvbox/main/peter_tvbox_pro.json"
+      ]
+    },
+    {
+      "id": "wex",
+      "name": "王二小",
+      "keywords": ["王二小", "wex", "放牛娃"],
+      "urls": [
+        "http://tvbox.王二小放牛娃.top",
+        "https://9280.kstore.vip/wex.json",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/wangerxiao.json"
+      ]
+    },
+    {
+      "id": "xhz_4k",
+      "name": "4K小盒子",
+      "keywords": ["小盒子", "4k", "xhz"],
+      "urls": [
+        "http://xhztv.top/4k.json",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/4k.json"
+      ]
+    },
+    {
+      "id": "my",
+      "name": "摸鱼儿",
+      "keywords": ["摸鱼", "moyu"],
+      "urls": [
+        "https://我不是.摸鱼儿.top",
+        "http://我不是.摸鱼儿.top"
+      ]
+    },
+    {
+      "id": "fm",
+      "name": "肥猫",
+      "keywords": ["肥猫", "feimao", "panda"],
+      "urls": [
+        "http://肥猫.com",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/feimao.json",
+        "http://我不是.肥猫.live/接口禁止贩卖"
+      ]
+    },
+    {
+      "id": "og",
+      "name": "欧歌",
+      "keywords": ["欧歌", "ouge", "nxog"],
+      "urls": [
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/ouge.json",
+        "https://tv.nxog.top/m/",
+        "http://tv.nxog.top/m/"
+      ]
+    },
+    {
+      "id": "xm",
+      "name": "小马",
+      "keywords": ["小马", "xiaoma"],
+      "urls": [
+        "https://szyyds.cn/tv/x.json",
+        "http://szyyds.cn/tv/x.json"
+      ]
+    },
+    {
+      "id": "xyq",
+      "name": "香雅情",
+      "keywords": ["香雅情", "xyq"],
+      "urls": [
+        "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQ.json",
+        "https://gh-proxy.com/https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQ.json"
+      ]
+    },
+    {
+      "id": "llb",
+      "name": "老刘备",
+      "keywords": ["老刘备", "liubei"],
+      "urls": [
+        "https://raw.githubusercontent.com/liu673cn/box/main/m.json",
+        "https://gh-proxy.com/https://raw.githubusercontent.com/liu673cn/box/main/m.json"
+      ]
+    },
+    {
+      "id": "fty",
+      "name": "饭太硬",
+      "keywords": ["饭太硬", "fantaiying", "fty"],
+      "urls": [
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/fantaiying.json",
+        "https://raw.githubusercontent.com/gaotianliuyun/gao/master/0826.json",
+        "http://www.饭太硬.com/tv"
+      ]
+    },
+    {
+      "id": "xiaomi",
+      "name": "小米",
+      "keywords": ["小米", "xiaomi"],
+      "urls": [
+        "http://www.mpanso.com/%E5%B0%8F%E7%B1%B3/DEMO.json",
+        "http://xhww.fun:63/%E5%B0%8F%E7%B1%B3/DEMO.json",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/xiaomi.json"
+      ]
+    },
+    {
+      "id": "pg",
+      "name": "PG网盘",
+      "keywords": ["pg", "盘哥"],
+      "urls": [
+        "https://raw.githubusercontent.com/gaotianliuyun/gao/master/pg.json",
+        "https://raw.githubusercontent.com/zhizunbao84/gao_for_tvbox/main/pg.json",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/pg.json"
+      ]
+    },
+    {
+      "id": "ok",
+      "name": "OK猫",
+      "keywords": ["ok", "ok猫", "okjack"],
+      "urls": [
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/ok.json",
+        "https://jihulab.com/okcaptain/kko/raw/main/ok.txt",
+        "http://ok321.top/tv"
+      ]
+    },
+    {
+      "id": "nf",
+      "name": "南风",
+      "keywords": ["南风", "nanfeng"],
+      "urls": [
+        "https://gitea.com/Yoursmile/TVBox/raw/branch/main/XC.json",
+        "https://raw.githubusercontent.com/Lightconer/tvbox-ysc-config/main/output/nanfeng.json",
+        "https://raw.githubusercontent.com/yoursmile66/TVBox/main/XC.json"
+      ]
+    }
+  ],
+  "extra_vod_urls": [
+    "https://raw.githubusercontent.com/TVboxorg/TVbox/main/dist/official.json",
+    "https://raw.githubusercontent.com/gaotianliuyun/gao/master/js.json",
+    "https://raw.githubusercontent.com/gaotianliuyun/gao/master/0821.json",
+    "https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/config.json"
+  ],
+  "cms_api_list": [
+    { "key": "bfzy", "name": "暴风资源", "api": "https://bfzyapi.com/api.php/provide/vod/" },
+    { "key": "lzzy", "name": "量子资源", "api": "https://cj.lziapi.com/api.php/provide/vod/" },
+    { "key": "ffzy", "name": "非凡资源", "api": "https://cj.ffzyapi.com/api.php/provide/vod/" },
+    { "key": "snzy", "name": "索尼资源", "api": "https://suoniapi.com/api.php/provide/vod/" },
+    { "key": "sdzy", "name": "闪电资源", "api": "https://sdzyapi.com/api.php/provide/vod/" },
+    { "key": "zdzy", "name": "最大资源", "api": "https://api.zuidapi.com/api.php/provide/vod/" },
+    { "key": "gszy", "name": "光速资源", "api": "https://api.guangsuapi.com/api.php/provide/vod/" },
+    { "key": "hnzy", "name": "红牛资源", "api": "https://www.hongniuzy2.com/api.php/provide/vod/" },
+    { "key": "hhzy", "name": "豪华资源", "api": "https://hhzyapi.com/api.php/provide/vod/" },
+    { "key": "jszy", "name": "极速资源", "api": "https://jszyapi.com/api.php/provide/vod/" },
+    { "key": "mdzy", "name": "魔都动漫", "api": "https://www.mdzyapi.com/api.php/provide/vod/" },
+    { "key": "ikun", "name": "ikun资源", "api": "https://ikunzyapi.com/api.php/provide/vod/" },
+    { "key": "ukzy", "name": "U酷资源", "api": "https://api.ukuapi.com/api.php/provide/vod/" },
+    { "key": "taopian", "name": "淘片资源", "api": "https://taopianapi.com/cjapi/mc/vod/json.html" }
+  ],
+  "pan_spider_sites": [
+    {
+      "key": "Wogg",
+      "name": "玩偶哥哥·4K臻享",
+      "type": 3,
+      "api": "csp_Wogg",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "changeable": 1,
+      "ext": "https://wogg.xxooo.cf/"
+    },
+    {
+      "key": "Mogg",
+      "name": "木偶哥哥·4K网盘",
+      "type": 3,
+      "api": "csp_Wogg",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "changeable": 1,
+      "ext": "https://mogg.top/"
+    },
+    {
+      "key": "LibvioPan",
+      "name": "LIBVIO·网盘直连",
+      "type": 3,
+      "api": "csp_Libvio",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "ext": "https://www.libvio.pw/"
+    }
+  ],
+  "proxy_candidates": [
+    "https://gh-proxy.com/",
+    "https://cdn.gh-proxy.org/",
+    "https://gh.qsd.onl/",
+    "https://ghfast.top/",
+    "https://mirror.ghproxy.com/",
+    "https://ghproxy.net/",
+    "https://github.moeyy.xyz/",
+    "https://ghps.cc/",
+    "https://gh.ddlc.top/",
+    "https://gh-proxy.net/",
+    "https://ghfile.geekertao.top/",
+    "https://gh.con.sh/"
+  ]
+}

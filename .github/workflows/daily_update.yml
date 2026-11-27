@@ -1,0 +1,56 @@
+name: Daily IPTV Source Update & Speedtest
+
+on:
+  schedule:
+    - cron: '17 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Syntax check
+        run: python -m py_compile update_sources.py core/*.py
+
+      - name: Run source aggregation and speedtest
+        run: python -u update_sources.py
+
+      - name: Commit and push updated sources
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git rm -rf --cached --ignore-unmatch __pycache__ core/__pycache__ || true
+          git add -A
+          if ! git diff --staged --quiet; then
+            CURRENT_TIME=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
+            git commit -m "chore: 自动更新测速视频源 ${CURRENT_TIME}"
+            REPO_SIZE_MB=$(du -sm .git | cut -f1)
+            if [ "$REPO_SIZE_MB" -gt 50 ]; then
+              echo "仓库体积达到 ${REPO_SIZE_MB}MB，执行单提交历史压缩..."
+              git checkout --orphan temp_branch
+              git add -A
+              git commit -m "chore: 自动更新测速视频源并压缩仓库历史 ${CURRENT_TIME}"
+              git branch -D main
+              git branch -m main
+              git push -f origin main
+            else
+              git push origin main
+            fi
+          else
+            echo "源与配置无实质变化，跳过提交。"
+          fi
