@@ -28,6 +28,58 @@ BUILTIN_PROXY_RADAR_URLS = [
     "https://mirror.ghproxy.com/",
 ]
 
+# 电视端网盘统一 Token 挂载协议路径（兼容 OK影视PRO / 影视仓 / NEWBOX / TVBox 饭太硬与 OK 系 JAR）
+DEFAULT_CLOUD_DRIVE_PATH = "tvfan/Cloud-drive.txt"
+
+
+def write_pan_token_template(filepath="token_template.json"):
+    """生成电视端（OK影视PRO / 影视仓 / NEWBOX / TVBox）统一网盘 Token 配置模板"""
+    template = {
+        "_说明": [
+            "1. 适用播放器：OK影视PRO、影视仓、NEWBOX、TVBox（FongMi/Takagen99 版）。",
+            "2. 使用方法（二选一）：",
+            "   方法A（推荐）：在 OK影视PRO / 影视仓 设置 -> 网盘配置 中直接扫码登录阿里/夸克/UC，播放器会自动全局注入。",
+            "   方法B（通用文件）：将本文件填写对应 Token/Cookie 后，重命名为 Cloud-drive.txt 并放入电视本地目录 /sdcard/TVBox/tvfan/Cloud-drive.txt（或 /sdcard/tvfan/Cloud-drive.txt）。",
+            "3. 下面字段已覆盖饭太硬系、PG系、OK系、王二小系等主流网盘爬虫 JAR 的读取键名。"
+        ],
+        "ali_token": "在此填入阿里云盘32位refresh_token",
+        "quark_cookie": "在此填入夸克网盘网页版Cookie",
+        "uc_cookie": "在此填入UC网盘网页版Cookie",
+        "115_cookie": "在此填入115网盘Cookie（可选）",
+        "tianyi_cookie": "在此填入天翼云盘Cookie（可选）",
+        "baidu_cookie": "在此填入百度网盘BDUSS等Cookie（可选）",
+        "thread": 6,
+        "chunk_size": 512,
+        "danmu": True
+    }
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(template, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"写入网盘 Token 模板失败: {e}")
+
+
+def _normalize_pan_site_ext(site):
+    """
+    规范化网盘站点 ext 传参结构：
+    - 若 ext 为 JSON 字符串或 dict，统一补充 Cloud-drive 协议路径以便一键联动本地 Token；
+    - 若 ext 为纯 http(s) 网址字符串，保持原样以兼容仅接收 URL 的网盘爬虫。
+    """
+    sc = dict(site)
+    ext = sc.get("ext")
+    if isinstance(ext, dict):
+        new_ext = dict(ext)
+        new_ext.setdefault("Cloud-drive", DEFAULT_CLOUD_DRIVE_PATH)
+        sc["ext"] = json.dumps(new_ext, ensure_ascii=False)
+    elif isinstance(ext, str):
+        stripped = ext.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            parsed = parse_json_lenient(stripped)
+            if isinstance(parsed, dict):
+                parsed.setdefault("Cloud-drive", DEFAULT_CLOUD_DRIVE_PATH)
+                sc["ext"] = json.dumps(parsed, ensure_ascii=False)
+    return sc
+
 
 def build_douban_site():
     """增强版豆瓣源：内置标准影视/榜单分类 ext，避免电视端顶部分类栏为空"""
@@ -241,7 +293,9 @@ def arrange_sites_smart_order(sites, settings, rules):
     cms_candidates = [
         s for s in others if s.get("type") in (0, 1) and not is_pan_site(s, pan_kws, invalid_kws)
     ]
-    pan_candidates = [s for s in others if is_pan_site(s, pan_kws, invalid_kws)]
+    pan_candidates = [
+        _normalize_pan_site_ext(s) for s in others if is_pan_site(s, pan_kws, invalid_kws)
+    ]
     spider_other = [
         s
         for s in others
@@ -442,19 +496,27 @@ def _normalize_parse_entry(p):
 
 def _is_real_parse_response(p_type, body_text):
     """
-    真实播放解析校验：
-    - type=1（JSON 解析）：必须能解析为 JSON 且包含有效的视频播放链接（http/m3u8/mp4）
-    - type=0 / 2（Web 嗅探解析）：必须返回正常 HTML 页面（非空白或 404/防火墙拦截页）
+    真实播放解析校验（防失效占位视频与广告劫持）：
+    - type=1（JSON 解析）：必须能解析为 JSON 且包含有效的视频播放链接（非 404/error 占位链）
+    - type=0 / 2（Web 嗅探解析）：必须返回正常 HTML 页面（非空白或 404/防火墙/广告拦截页）
     """
     if not body_text:
         return False
     txt = body_text.strip()
+    bad_play_markers = ("404.mp4", "error.m3u8", "err.mp4", "invalid", "expired", "解析失败", "请联系", "授权过期", "澳门", "博彩")
     if p_type == 1:
         try:
             data = parse_json_lenient(txt)
             if isinstance(data, dict):
+                code_val = data.get("code")
+                if code_val is not None and str(code_val).strip() not in ("200", "0", "1", "true", "True"):
+                    return False
                 play_u = str(data.get("url") or data.get("play_url") or "").strip()
-                if play_u.startswith(("http://", "https://")) and not is_invalid_site_url(play_u):
+                if (
+                    play_u.startswith(("http://", "https://"))
+                    and not is_invalid_site_url(play_u)
+                    and not any(bm in play_u.lower() for bm in bad_play_markers)
+                ):
                     return True
         except Exception:
             pass
@@ -463,7 +525,7 @@ def _is_real_parse_response(p_type, body_text):
     lower_txt = txt.lower()
     if len(txt) < 80:
         return False
-    bad_markers = ("404 not found", "502 bad gateway", "access denied", "error 1020", "防火墙")
+    bad_markers = ("404 not found", "502 bad gateway", "access denied", "error 1020", "防火墙", "域名出售", "已过期")
     if any(b in lower_txt for b in bad_markers):
         return False
     return "<html" in lower_txt or "<script" in lower_txt or "player" in lower_txt
@@ -490,7 +552,7 @@ def filter_and_sort_parses(parses):
         idx, p = idx_p
         u = str(p.get("url", "")).strip()
         if not u.startswith(("http://", "https://")):
-            return (1, 500, idx, p)
+            return (2, 500, idx, p)
         p_type = int(p.get("type", 0) or 0)
         t0 = time.time()
         try:
@@ -501,14 +563,19 @@ def filter_and_sort_parses(parses):
                     lat = round((time.time() - t0) * 1000)
                     body = resp.read(4096).decode("utf-8", errors="ignore")
                     if _is_real_parse_response(p_type, body):
-                        return (0, lat, idx, p)
+                        # type=1 JSON 直连解析优先于 type=0 Web 嗅探解析
+                        type_prio = 0 if p_type == 1 else 1
+                        return (type_prio, lat, idx, p)
         except Exception:
             pass
         return None
 
-    valid = run_parallel(check_parse, list(enumerate(unique[:35])), workers=14)
+    valid = run_parallel(check_parse, list(enumerate(unique[:40])), workers=16)
     valid.sort(key=lambda x: (x[0], x[1], x[2]))
-    return [x[3] for x in valid][:25] if valid else unique[:25]
+    selected = [x[3] for x in valid][:10] if valid else unique[:10]
+    http_ok = sum(1 for x in valid if x[0] in (0, 1))
+    print(f"官采解析器（parses）探活完成：有效 {http_ok} 个 -> 精选留存 {len(selected)} 个")
+    return selected
 
 
 def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", version_tag=""):
@@ -531,7 +598,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
 
     pan_list = sorted(
         [
-            s
+            _normalize_pan_site_ext(s)
             for s in sites
             if s.get("key") != "douban_rank" and is_pan_site(s, pan_kws, invalid_kws)
         ],
@@ -608,7 +675,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
             "wallpaper": full_tv_with_meta.get("wallpaper", "https://eees.cc"),
             "lives": full_tv_with_meta.get("lives", []),
             "sites": strip_internal_meta(ordered_sites),
-            "parses": full_tv_with_meta.get("parses", [])[:12],
+            "parses": full_tv_with_meta.get("parses", [])[:8],
             "flags": full_tv_with_meta.get("flags", []),
             "ijk": full_tv_with_meta.get("ijk", []),
             "ads": full_tv_with_meta.get("ads", []),
@@ -620,6 +687,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
 
 
 def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5="", version_tag=""):
+    write_pan_token_template("token_template.json")
     ed = settings.get("editions", {})
     pan_kws = settings.get("pinned", {}).get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
@@ -628,7 +696,7 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
     sites = full_tv_with_meta.get("sites", [])
     pan_list = sorted(
         [
-            s
+            _normalize_pan_site_ext(s)
             for s in sites
             if s.get("key") != "douban_rank" and is_pan_site(s, pan_kws, invalid_kws)
         ],
@@ -651,7 +719,7 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
             "wallpaper": full_tv_with_meta.get("wallpaper", "https://eees.cc"),
             "lives": full_tv_with_meta.get("lives", []),
             "sites": strip_internal_meta([build_douban_site()] + graded),
-            "parses": full_tv_with_meta.get("parses", [])[:10],
+            "parses": full_tv_with_meta.get("parses", [])[:8],
             "flags": full_tv_with_meta.get("flags", []),
             "ijk": full_tv_with_meta.get("ijk", []),
             "ads": full_tv_with_meta.get("ads", []),
