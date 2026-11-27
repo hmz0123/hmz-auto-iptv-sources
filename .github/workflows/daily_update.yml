@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '17 20 * * *'
   workflow_dispatch:
+    inputs:
+      compact_history:
+        description: '立即压缩 Git 历史体积（保留最近 15 次提交）'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -28,9 +34,13 @@ jobs:
         run: python -m py_compile update_sources.py core/*.py
 
       - name: Run source aggregation and speedtest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python -u update_sources.py
 
       - name: Commit and push updated sources
+        env:
+          FORCE_COMPACT: ${{ github.event.inputs.compact_history }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -39,18 +49,26 @@ jobs:
           if ! git diff --staged --quiet; then
             CURRENT_TIME=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
             git commit -m "chore: 自动更新测速视频源 ${CURRENT_TIME}"
-            REPO_SIZE_MB=$(du -sm .git | cut -f1)
-            if [ "$REPO_SIZE_MB" -gt 50 ]; then
-              echo "仓库体积达到 ${REPO_SIZE_MB}MB，执行单提交历史压缩..."
-              git checkout --orphan temp_branch
-              git add -A
-              git commit -m "chore: 自动更新测速视频源并压缩仓库历史 ${CURRENT_TIME}"
-              git branch -D main
-              git branch -m main
-              git push -f origin main
-            else
-              git push origin main
-            fi
           else
             echo "源与配置无实质变化，跳过提交。"
+          fi
+
+          REPO_SIZE_MB=$(du -sm .git | cut -f1)
+          DAY_OF_MONTH=$(TZ='Asia/Shanghai' date +'%d')
+          TOTAL_COMMITS=$(git rev-list --count HEAD)
+          echo "当前 .git 体积: ${REPO_SIZE_MB}MB，总提交数: ${TOTAL_COMMITS}，今日日期: ${DAY_OF_MONTH} 号"
+
+          if { [ "$REPO_SIZE_MB" -gt 35 ] || [ "$DAY_OF_MONTH" = "01" ] || [ "$FORCE_COMPACT" = "true" ]; } && [ "$TOTAL_COMMITS" -gt 20 ]; then
+            echo "触发历史瘦身：保留最近 15 次提交并清理旧 JAR 对象..."
+            KEEP_BASE=$(git rev-parse HEAD~14)
+            git checkout --orphan temp_branch "$KEEP_BASE"
+            git commit -m "chore: 保留近15次提交并压缩仓库历史 ${CURRENT_TIME:-$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')}"
+            git cherry-pick "${KEEP_BASE}..main"
+            git branch -M temp_branch main
+            git reflog expire --expire=now --all
+            git gc --prune=now --aggressive
+            git push -f origin main
+            echo "历史压缩完成，当前 .git 体积: $(du -sm .git | cut -f1)MB，提交数: $(git rev-list --count HEAD)"
+          else
+            git push origin main
           fi
