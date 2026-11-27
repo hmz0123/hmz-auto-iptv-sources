@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-27 12:07:33 北京时间",
+  "updated_at": "2026-11-27 13:42:48 北京时间",
   "spider": "./custom_spider.jar;md5;15e6a916ed637e3c5dfb75df41d881be",
   "wallpaper": "https://eees.cc",
   "lives": [
@@ -26,7 +26,7 @@
     },
     {
       "key": "Mogg",
-      "name": "木偶哥哥·4K网盘(154ms)",
+      "name": "木偶哥哥·4K网盘(89ms)",
       "type": 3,
       "api": "csp_Wogg",
       "searchable": 1,
@@ -55,17 +55,6 @@
       "quickSearch": 1,
       "filterable": 1,
       "ext": "https://www.libvio.pw/"
-    },
-    {
-      "key": "csp_XYQHikerAL_玩偶哥哥",
-      "name": "📀玩偶哥哥(优)",
-      "type": 3,
-      "api": "csp_XYQHikerAL",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1,
-      "ext": "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
-      "jar": "./jars/705ba6e23c43.jar;md5;705ba6e23c4384c37a11dd904727520b"
     },
     {
       "key": "Lib",
@@ -98,26 +87,15 @@
       "jar": "./jars/3d161697458e.jar;md5;3d161697458ecbcd2651a749db761ba1"
     },
     {
-      "key": "csp_Netfixtv",
-      "name": "💌┃至臻┃影视",
+      "key": "csp_XYQHikerAL_玩偶哥哥",
+      "name": "📀玩偶哥哥(优)",
       "type": 3,
-      "api": "csp_Netfixtv",
-      "playerType": 2,
+      "api": "csp_XYQHikerAL",
+      "searchable": 1,
+      "quickSearch": 1,
       "filterable": 1,
-      "ext": "",
-      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
-      "quickSearch": 1
-    },
-    {
-      "key": "csp_Duopan",
-      "name": "🖍︎┃蜡笔┃云盘",
-      "type": 3,
-      "api": "csp_Duopan",
-      "playerType": 2,
-      "filterable": 1,
-      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
-      "ext": "https://duopan.fun/",
-      "quickSearch": 1
+      "ext": "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
+      "jar": "./jars/705ba6e23c43.jar;md5;705ba6e23c4384c37a11dd904727520b"
     },
     {
       "key": "fm_csp_Duopan",
@@ -141,39 +119,54 @@
         },
         "url_key": "Duopan2"
       },
-      "jar": "https://img2.gelonghui.com/library/3f9b9-de4a5d2c-7fea-4d70-8a85-79be6c379621.png;md5;3f9b9cac793a3e9b818131c8a7208800",
+      "jar": "./jars/3f9b9cac793a.jar;md5;3f9b9cac793a3e9b818131c8a7208800",
+      "quickSearch": 1
+    },
+    {
+      "key": "xm_玩偶",
+      "name": "👽玩偶哥哥┃4K弹幕",
+      "type": 3,
+      "api": "csp_WoGGGuard",
+      "timeout": 30,
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 0,
+      "ext": {
+        "Cloud-drive": "tvfan/Cloud-drive.txt"
+      },
+      "jar": "./jars/4ce29ce27eef.jar;md5;4ce29ce27eeff6a73a230dd92d98ba0c"
+    },
+    {
+      "key": "csp_Netfixtv",
+      "name": "💌┃至臻┃影视",
+      "type": 3,
+      "api": "csp_Netfixtv",
+      "playerType": 2,
+      "filterable": 1,
+      "ext": "",
+      "jar": "https://raw.githubusercontent.com/liu673cn/box/main/libs/jar/Panda.jar",
+      "quickSearch": 1
+    },
+    {
+      "key": "csp_Duopan",
+      "name": "🖍︎┃蜡笔┃云盘",
+      "type": 3,
+      "api": "csp_Duopan",
+      "playerType": 2,
+      "filterable": 1,
+      "jar": "https://raw.githubusercontent.com/liu673cn/box/main/libs/jar/Panda.jar",
+      "ext": "https://duopan.fun/",
       "quickSearch": 1
     },
     {
       "key": "MV_vod",
-      "name": "🎶明星┃MV",
+      "name": "🎹┃MTV┃合集",
       "type": 1,
       "api": "https://mv.wogg.link/mv/vod",
-      "style": {
-        "type": "oval"
-      },
       "searchable": 1,
       "quickSearch": 1,
-      "changeable": 0,
+      "filterable": 1,
       "ext": ""
-    },
-    {
-      "key": "my_Libvio",
-      "name": "📺┆立播┆4K",
-      "type": 3,
-      "api": "csp_Libvio",
-      "searchable": 1,
-      "changeable": 1,
-      "ext": {
-        "site": [
-          "https://libviofabu.com",
-          "https://libvio.app",
-          "https://libfabu.com",
-          "https://libviogroup.github.io"
-        ]
-      },
-      "jar": "https://qiniu.gongxueyun.com/upload/2371282/2026-11-12/noknow/759250805_1_1794505074145.jar;md5;53b51f8c239b727ce4cd18dc2c3b7a99",
-      "quickSearch": 1
     },
     {
       "key": "my_Wogg",
@@ -214,6 +207,11 @@
   ],
   "parses": [
     {
+      "name": "7777嗅探",
+      "type": 0,
+      "url": "https://jx.777jiexi.com/player/?url="
+    },
+    {
       "name": "虾米",
       "type": 0,
       "url": "https://jx.xmflv.com/?url=",
@@ -242,9 +240,9 @@
       }
     },
     {
-      "name": "8090嗅探",
+      "name": "绣探",
       "type": 0,
-      "url": "https://www.8090g.cn/jiexi/?url="
+      "url": "https://www.pangujiexi.com/pangu/?url="
     },
     {
       "name": "冰豆",
@@ -255,16 +253,6 @@
           "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML,like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
         }
       }
-    },
-    {
-      "name": "绣探",
-      "type": 0,
-      "url": "https://www.pangujiexi.com/pangu/?url="
-    },
-    {
-      "name": "7777嗅探",
-      "type": 0,
-      "url": "https://jx.777jiexi.com/player/?url="
     },
     {
       "name": "云解",
@@ -313,6 +301,16 @@
       }
     },
     {
+      "name": "8090嗅探",
+      "type": 0,
+      "url": "https://www.8090g.cn/jiexi/?url="
+    },
+    {
+      "name": "夜幕嗅探",
+      "type": 0,
+      "url": "https://www.yemu.xyz/?url="
+    },
+    {
       "name": "淘片",
       "type": 0,
       "url": "https://jx.yparse.com/index.php?url=",
@@ -321,11 +319,6 @@
           "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML,like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
         }
       }
-    },
-    {
-      "name": "夜幕嗅探",
-      "type": 0,
-      "url": "https://www.yemu.xyz/?url="
     }
   ],
   "flags": [
