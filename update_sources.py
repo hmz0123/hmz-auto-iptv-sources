@@ -34,6 +34,7 @@ from core.utils import (
     verify_and_mirror_assets,
 )
 from core.vod import (
+    _initial_cms_health_score,
     collect_vod_and_update_registry,
     discover_new_upstream_sources,
     fetch_ziyuanzu_cms_candidates,
@@ -311,6 +312,7 @@ def main():
     th = settings.get("thresholds", {})
     dead_hosts = tuple(rules.get("dead_proxy_hosts", []))
     pan_kws = rules.get("pan_keywords", [])
+    cms_kws = settings.get("pinned", {}).get("cms_keywords", [])
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
     prev_counts = _snapshot_prev_counts(settings, pan_kws, invalid_kws)
 
@@ -362,6 +364,7 @@ def main():
                 "origin": "discovered",
                 "fail_streak": 0,
                 "latency": 999,
+                "health_score": _initial_cms_health_score("", api_u, cms_kws),
                 "last_ok_at": "",
             },
         )
@@ -550,32 +553,34 @@ def main():
         key=lambda x: (not x["ok"], x["lat"]),
     )
 
-    cf_healthy_entries, cf_failed_entries = [], []
-    for i, c in enumerate(cf_sorted):
+    cf_primary_entries, cf_backup_entries, cf_failed_entries = [], [], []
+    healthy_idx = 0
+    for c in cf_sorted:
         if c["ok"]:
-            cf_healthy_entries.append(
+            healthy_idx += 1
+            trio = [
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox_lite.json", version_tag),
-                    "name": f"⚡CF精简{i+1} [{c['host']}] ({c['lat']}ms)",
-                }
-            )
-            cf_healthy_entries.append(
+                    "name": f"⚡CF精简{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                },
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox_pan.json", version_tag),
-                    "name": f"💎CF网盘{i+1} [{c['host']}] ({c['lat']}ms)",
-                }
-            )
-            cf_healthy_entries.append(
+                    "name": f"💎CF网盘{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                },
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox.json", version_tag),
-                    "name": f"👑CF全量{i+1} [{c['host']}] ({c['lat']}ms)",
-                }
-            )
+                    "name": f"👑CF全量{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                },
+            ]
+            if healthy_idx == 1:
+                cf_primary_entries.extend(trio)
+            else:
+                cf_backup_entries.extend(trio)
         else:
             cf_failed_entries.append(
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox.json", version_tag),
-                    "name": f"👑CF冷备{i+1} [{c['host']}]",
+                    "name": f"👑CF冷备 [{c['host']}]",
                 }
             )
 
@@ -589,7 +594,27 @@ def main():
                 if p.get(k):
                     p[k] = _ensure_raw_branch_url(p[k], repo_owner_path, repo_branch)
 
-    proxy_entries = (
+    # 第一屏直达双代理（最速代理精简 + 最速代理网盘）与其余灾备代理分离
+    proxy_top_entries, proxy_rest_entries = [], []
+    if lite_px:
+        top1 = lite_px[0]
+        if top1.get("lite_url"):
+            proxy_top_entries.append(
+                {
+                    "url": append_cache_buster(top1["lite_url"], version_tag),
+                    "name": top1["lite_name"],
+                }
+            )
+        if top1.get("pan_url"):
+            proxy_top_entries.append(
+                {
+                    "url": append_cache_buster(top1["pan_url"], version_tag),
+                    "name": top1["pan_name"],
+                }
+            )
+
+    top_seen_urls = {x["url"] for x in proxy_top_entries}
+    for item in (
         [
             {
                 "url": append_cache_buster(p["lite_url"], version_tag),
@@ -614,7 +639,10 @@ def main():
             for p in full_px
             if p.get("url")
         ]
-    )
+    ):
+        if item["url"] not in top_seen_urls:
+            top_seen_urls.add(item["url"])
+            proxy_rest_entries.append(item)
 
     fallback_entries = []
     if cf_sorted and cf_sorted[0]["ok"]:
@@ -666,7 +694,15 @@ def main():
             }
         )
 
-    dc_urls = cf_healthy_entries + proxy_entries + fallback_entries + cf_failed_entries
+    # 电视遥控器第一屏黄金顺序：主推CF1(精简/网盘/全量) -> 最速双代理 -> 应急绝对路径 -> 备用CF2~4 -> 其余灾备代理
+    dc_urls = (
+        cf_primary_entries
+        + proxy_top_entries
+        + fallback_entries
+        + cf_backup_entries
+        + proxy_rest_entries
+        + cf_failed_entries
+    )
 
     if dc_urls:
         with open("dc.json", "w", encoding="utf-8") as f:
