@@ -3,7 +3,7 @@
   "cache_dir": "cache",
   "jars_dir": "jars",
   "max_mirror_jar_bytes": 2621440,
-  "max_mirrored_jars": 18,
+  "max_mirrored_jars": 15,
   "urls": {
     "upstream_spider": "https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar",
     "ziyuanzu_cms": "https://www.ziyuanzu.com/download/ziyuanzu-cms-interfaces.json",
@@ -18,23 +18,23 @@
   },
   "thresholds": {
     "timeout": 6,
-    "live_timeout": 5,
-    "stream_timeout": 4,
+    "live_timeout": 4,
+    "stream_timeout": 3,
     "max_workers": 24,
     "cms_workers": 18,
     "min_valid_live_channels": 20,
-    "min_live_slice_speed_kbs": 120,
+    "min_live_slice_speed_kbs": 150,
     "max_streams_per_channel": 6,
     "max_live_channels": 1500,
     "min_valid_cms_sites": 5,
-    "max_cms_sites": 120,
+    "max_cms_sites": 90,
     "min_quality_gate_full_sites": 30,
     "min_quality_gate_pan_sites": 3
   },
   "editions": {
     "lite_max_source_latency": 1200,
-    "lite_max_cms_latency": 900,
-    "lite_max_cms_sites": 25,
+    "lite_max_cms_latency": 650,
+    "lite_max_cms_sites": 18,
     "lite_max_pan_sites": 25,
     "lite_max_extra_spider_sites": 25,
     "lite_cms_speedtest_top_n": 16,
@@ -52,12 +52,12 @@
     "file": "source_registry.json",
     "max_new_discoveries_per_run": 15,
     "max_discovered_fail_streak": 3,
-    "max_seed_suspend_streak": 4,
+    "max_seed_suspend_streak": 6,
     "purge_seed_fail_streak": 15,
     "purge_seed_fail_days": 15,
     "max_live_sources_cap": 60,
     "max_vod_sources_cap": 80,
-    "max_cms_apis_cap": 150
+    "max_cms_apis_cap": 180
   },
   "proxy": {
     "list_file": "active_proxies.json",
