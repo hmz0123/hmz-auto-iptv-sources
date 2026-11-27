@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 
 from core.builder import (
@@ -24,6 +25,7 @@ from core.utils import (
     DEFAULT_DEAD_OR_JUNK_WORDS,
     HEADERS,
     append_cache_buster,
+    idn_encode,
     is_pan_site,
     load_configs,
     normalize_site_display_name,
@@ -71,6 +73,98 @@ def _ensure_raw_branch_url(url, repo_path, branch="main"):
     if prefix_marker in url and branch_marker not in url:
         return url.replace(prefix_marker, branch_marker, 1)
     return url
+
+
+def _prune_dead_discovery_pages(registry, settings):
+    """
+    预检 discovery_pages 可用性：
+    - 返回 404/410 的非种子页直接拉黑入 purged_seeds；
+    - 连续失败达到 max_discovered_fail_streak 的发现页自动剔除并拉黑，避免反复报错。
+    """
+    pages = registry.get("discovery_pages", [])
+    if not isinstance(pages, list) or not pages:
+        return []
+
+    reg_cfg = settings.get("registry", {})
+    max_fail = int(reg_cfg.get("max_discovered_fail_streak", 3))
+    purged_set = set(registry.get("purged_seeds", []))
+    fail_counts = registry.get("discovery_fail_counts")
+    if not isinstance(fail_counts, dict):
+        fail_counts = {}
+
+    def _probe_page(page_u):
+        u = str(page_u or "").strip()
+        if not u or " " in u or u in purged_set or u.rstrip("/") in purged_set:
+            return (u, "purged")
+        target = idn_encode(u)
+        need_get = False
+        try:
+            req = urllib.request.Request(target, headers=HEADERS, method="HEAD")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status < 400:
+                    return (u, "ok")
+                if resp.status in (404, 410):
+                    return (u, "gone")
+                return (u, "fail")
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 410):
+                return (u, "gone")
+            if e.code in (403, 405):
+                need_get = True
+            else:
+                return (u, "fail")
+        except Exception:
+            return (u, "fail")
+
+        if need_get:
+            try:
+                req = urllib.request.Request(target, headers=HEADERS, method="GET")
+                with urllib.request.urlopen(req, timeout=6) as resp:
+                    if resp.status < 400:
+                        return (u, "ok")
+                    if resp.status in (404, 410):
+                        return (u, "gone")
+            except urllib.error.HTTPError as e:
+                if e.code in (404, 410):
+                    return (u, "gone")
+            except Exception:
+                pass
+        return (u, "fail")
+
+    kept, removed_logs = [], []
+    for u, status in run_parallel(_probe_page, pages, workers=12):
+        if not u or status == "purged":
+            continue
+        if status == "ok":
+            fail_counts.pop(u, None)
+            kept.append(u)
+        elif status == "gone":
+            fail_counts.pop(u, None)
+            purged_set.add(u)
+            purged_set.add(u.rstrip("/"))
+            removed_logs.append(f"discovery_pages: {u} (HTTP 404/410 已自动拉黑)")
+        else:
+            cnt = int(fail_counts.get(u, 0) or 0) + 1
+            if cnt >= max_fail:
+                fail_counts.pop(u, None)
+                purged_set.add(u)
+                purged_set.add(u.rstrip("/"))
+                removed_logs.append(f"discovery_pages: {u} (连续失败{cnt}次已自动拉黑)")
+            else:
+                fail_counts[u] = cnt
+                kept.append(u)
+
+    active_set = set(kept)
+    registry["discovery_fail_counts"] = {
+        k: v for k, v in fail_counts.items() if k in active_set
+    }
+    registry["discovery_pages"] = kept
+    registry["purged_seeds"] = sorted(purged_set)
+    if removed_logs:
+        print(f"自动清理失效发现页 {len(removed_logs)} 条:")
+        for line in removed_logs:
+            print(f"  - {line}")
+    return removed_logs
 
 
 def _purge_dead_seeds_and_update_tracker(registry, settings, now_iso):
@@ -130,26 +224,17 @@ def _filter_purged_seeds(seeds, registry):
     """过滤掉已打入 purged_seeds 黑名单或含空格的脏种子链接"""
     purged = set(registry.get("purged_seeds", []))
     cleaned = dict(seeds)
-    if isinstance(cleaned.get("live_source_urls"), list):
-        cleaned["live_source_urls"] = [
-            u.strip()
-            for u in cleaned["live_source_urls"]
-            if isinstance(u, str)
-            and u.strip()
-            and " " not in u.strip()
-            and u.strip() not in purged
-            and u.strip().rstrip("/") not in purged
-        ]
-    if isinstance(cleaned.get("extra_vod_urls"), list):
-        cleaned["extra_vod_urls"] = [
-            u.strip()
-            for u in cleaned["extra_vod_urls"]
-            if isinstance(u, str)
-            and u.strip()
-            and " " not in u.strip()
-            and u.strip() not in purged
-            and u.strip().rstrip("/") not in purged
-        ]
+    for list_key in ("discovery_pages", "live_source_urls", "extra_vod_urls"):
+        if isinstance(cleaned.get(list_key), list):
+            cleaned[list_key] = [
+                u.strip()
+                for u in cleaned[list_key]
+                if isinstance(u, str)
+                and u.strip()
+                and " " not in u.strip()
+                and u.strip() not in purged
+                and u.strip().rstrip("/") not in purged
+            ]
     if isinstance(cleaned.get("tvbox_vod_groups"), list):
         new_groups = []
         for g in cleaned["tvbox_vod_groups"]:
@@ -243,6 +328,7 @@ def main():
 
     registry = load_or_init_source_registry(settings, seeds, dead_hosts)
     _purge_dead_seeds_and_update_tracker(registry, settings, now_iso)
+    _prune_dead_discovery_pages(registry, settings)
     seeds = _filter_purged_seeds(seeds, registry)
 
     new_live, new_vod, new_cms = discover_new_upstream_sources(
@@ -284,7 +370,7 @@ def main():
             cms_map.setdefault(zyz_item["api"].rstrip("/"), zyz_item)
 
     val_cms = test_and_dedup_cms(cms_map, settings)
-    max_cms_sites = int(th.get("max_cms_sites", 100))
+    max_cms_sites = int(th.get("max_cms_sites", 90))
     if max_cms_sites > 0 and len(val_cms) > max_cms_sites:
         val_cms = val_cms[:max_cms_sites]
 
@@ -351,7 +437,6 @@ def main():
             seen_sigs.add(sig)
             return True
 
-        # 先锁定基准豆瓣站（保持 key="douban_rank" 不被改名），再注册网盘爬虫站与 CMS 站
         if reg_site(douban, allow_rename=False):
             base_sites.append(douban)
         for s in rank_pan_spider_sites(seeds.get("pan_spider_sites", []), verify_ext_top_n=10) + cms_sites:
@@ -498,7 +583,6 @@ def main():
         registry.get("discovery_pages", []), settings, seeds, dead_hosts=dead_hosts
     )
 
-    # 自动补全代理池 URL 中可能缺失的分支名（如 /main/）
     for px_list in (full_px, lite_px):
         for p in px_list:
             for k in ("url", "lite_url", "pan_url"):
