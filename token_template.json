@@ -1,0 +1,18 @@
+{
+  "_说明": [
+    "1. 适用播放器：OK影视PRO、影视仓、NEWBOX、TVBox（FongMi/Takagen99 版）。",
+    "2. 使用方法（二选一）：",
+    "   方法A（推荐）：在 OK影视PRO / 影视仓 设置 -> 网盘配置 中直接扫码登录阿里/夸克/UC，播放器会自动全局注入。",
+    "   方法B（通用文件）：将本文件填写对应 Token/Cookie 后，重命名为 Cloud-drive.txt 并放入电视本地目录 /sdcard/TVBox/tvfan/Cloud-drive.txt（或 /sdcard/tvfan/Cloud-drive.txt）。",
+    "3. 下面字段已覆盖饭太硬系、PG系、OK系、王二小系等主流网盘爬虫 JAR 的读取键名。"
+  ],
+  "ali_token": "在此填入阿里云盘32位refresh_token",
+  "quark_cookie": "在此填入夸克网盘网页版Cookie",
+  "uc_cookie": "在此填入UC网盘网页版Cookie",
+  "115_cookie": "在此填入115网盘Cookie（可选）",
+  "tianyi_cookie": "在此填入天翼云盘Cookie（可选）",
+  "baidu_cookie": "在此填入百度网盘BDUSS等Cookie（可选）",
+  "thread": 6,
+  "chunk_size": 512,
+  "danmu": true
+}
