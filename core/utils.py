@@ -4,6 +4,7 @@ import os
 import re
 import ssl
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -281,12 +282,43 @@ def normalize_site_display_name(raw_name):
     return f"{core}{lat_suffix}" if core else name
 
 
+def _load_dead_assets_cache(cache_dir, ttl_seconds=604800):
+    path = os.path.join(cache_dir, "dead_assets.json")
+    now_ts = time.time()
+    valid_map = {}
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+                if isinstance(raw, dict):
+                    for u, ts in raw.items():
+                        if isinstance(ts, (int, float)) and (now_ts - ts) < ttl_seconds:
+                            valid_map[u] = float(ts)
+        except Exception:
+            pass
+    return path, valid_map
+
+
+def _save_dead_assets_cache(path, dead_map):
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        trimmed = dict(sorted(dead_map.items(), key=lambda x: x[1], reverse=True)[:800])
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(trimmed, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
 def verify_and_mirror_assets(sites, settings, pan_keywords):
     """核心 JAR 本地化镜像（仅保留当前存活站点引用的 JAR）与外部依赖存活预检"""
+    cache_dir = settings.get("cache_dir", "cache")
     jars_dir = settings.get("jars_dir", "jars")
     max_bytes = int(settings.get("max_mirror_jar_bytes", 2621440))
-    max_kept_jars = int(settings.get("max_mirrored_jars", 18))
+    max_kept_jars = int(settings.get("max_mirrored_jars", 15))
     os.makedirs(jars_dir, exist_ok=True)
+
+    dead_cache_path, dead_assets_map = _load_dead_assets_cache(cache_dir)
+    cached_dead_urls = set(dead_assets_map.keys())
 
     existing_local_jars = {
         fn: os.path.join(jars_dir, fn)
@@ -299,22 +331,27 @@ def verify_and_mirror_assets(sites, settings, pan_keywords):
         raw_jar = str(s.get("jar", "")).strip()
         if raw_jar and not raw_jar.startswith("./"):
             clean_jar = raw_jar.split(";", 1)[0].strip()
-            if clean_jar.startswith(("http://", "https://")):
+            if clean_jar.startswith(("http://", "https://")) and clean_jar not in cached_dead_urls:
                 all_jar_urls.add(clean_jar)
                 if is_pan_site(s, pan_keywords) or s.get("_is_priority") or s.get("quickSearch") == 1:
                     priority_jar_urls.add(clean_jar)
         ext_val = s.get("ext")
         if isinstance(ext_val, str):
             clean_ext = ext_val.split("?", 1)[0].strip()
-            if clean_ext.startswith(("http://", "https://")) and clean_ext.lower().endswith((".js", ".json")):
-                ext_rule_urls.add(ext_val.strip())
+            full_ext = ext_val.strip()
+            if (
+                clean_ext.startswith(("http://", "https://"))
+                and clean_ext.lower().endswith((".js", ".json"))
+                and full_ext not in cached_dead_urls
+            ):
+                ext_rule_urls.add(full_ext)
 
     mirrored_map = {}
 
     def download_mirror_jar(jar_url):
         try:
             req = urllib.request.Request(idn_encode(jar_url), headers=OKHTTP_HEADERS)
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            with urllib.request.urlopen(req, timeout=7) as resp:
                 if resp.status not in (200, 206):
                     return None
                 content_len = resp.headers.get("Content-Length")
@@ -343,28 +380,47 @@ def verify_and_mirror_assets(sites, settings, pan_keywords):
     def check_asset(item):
         asset_type, u = item
         target = idn_encode(u)
-        for method in ("HEAD", "GET"):
+        need_get = False
+        try:
+            req = urllib.request.Request(target, headers=OKHTTP_HEADERS, method="HEAD")
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                if resp.status in (200, 206, 301, 302):
+                    return (asset_type, u, True)
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 405):
+                need_get = True
+            else:
+                return (asset_type, u, False)
+        except Exception:
+            return (asset_type, u, False)
+
+        if need_get:
             try:
-                req = urllib.request.Request(target, headers=OKHTTP_HEADERS, method=method)
-                with urllib.request.urlopen(req, timeout=4) as resp:
+                req = urllib.request.Request(target, headers=OKHTTP_HEADERS, method="GET")
+                with urllib.request.urlopen(req, timeout=3.5) as resp:
                     if resp.status in (200, 206, 301, 302):
-                        if method == "GET":
-                            chunk = resp.read(32)
-                            if chunk and not chunk.lstrip().lower().startswith((b"<!doctype", b"<html")):
-                                return (asset_type, u, True)
-                        else:
+                        chunk = resp.read(32)
+                        if chunk and not chunk.lstrip().lower().startswith((b"<!doctype", b"<html")):
                             return (asset_type, u, True)
             except Exception:
-                continue
+                pass
         return (asset_type, u, False)
 
     tasks = [("jar", u) for u in remaining_jars[:30]] + [("rule", u) for u in list(ext_rule_urls)[:40]]
     alive_extra_jars, dead_jars, dead_rules = set(), set(), set()
     if tasks:
-        results = run_parallel(check_asset, tasks, workers=18)
+        results = run_parallel(check_asset, tasks, workers=20)
         alive_extra_jars = {u for t, u, ok in results if t == "jar" and ok}
         dead_jars = {u for t, u, ok in results if t == "jar" and not ok}
         dead_rules = {u for t, u, ok in results if t == "rule" and not ok}
+
+    now_ts = time.time()
+    for u in dead_jars | dead_rules:
+        dead_assets_map[u] = now_ts
+    _save_dead_assets_cache(dead_cache_path, dead_assets_map)
+
+    all_dead_jars = dead_jars | cached_dead_urls
+    all_dead_rules = dead_rules | cached_dead_urls
 
     filtered, dropped_sites, rewritten_cnt = [], 0, 0
     active_local_jar_names = set()
@@ -384,11 +440,11 @@ def verify_and_mirror_assets(sites, settings, pan_keywords):
                     rewritten_cnt += 1
                     mirrored_fn = mirrored_map[clean_jar].split(";", 1)[0].replace(f"./{jars_dir}/", "")
                     active_local_jar_names.add(mirrored_fn)
-                elif clean_jar in dead_jars:
+                elif clean_jar in all_dead_jars:
                     dropped_sites += 1
                     continue
         ext_val = item.get("ext")
-        if isinstance(ext_val, str) and ext_val.strip() in dead_rules:
+        if isinstance(ext_val, str) and ext_val.strip() in all_dead_rules:
             dropped_sites += 1
             continue
         filtered.append(item)
@@ -405,6 +461,6 @@ def verify_and_mirror_assets(sites, settings, pan_keywords):
 
     print(
         f"外部依赖镜像与预检完成：本地镜像 JAR {len(mirrored_map)} 个（重写 {rewritten_cnt} 处，清理未引用 {removed_unused} 个），"
-        f"外部存活 JAR {len(alive_extra_jars)} 个，剔除死链 {dropped_sites} 站"
+        f"外部存活 JAR {len(alive_extra_jars)} 个，剔除死链 {dropped_sites} 站（死链缓存 {len(dead_assets_map)} 条）"
     )
     return filtered, (len(mirrored_map) + len(alive_extra_jars), dropped_sites, len(existing_local_jars))
