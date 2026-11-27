@@ -7,7 +7,9 @@ import random
 import re
 import time
 import urllib.parse
+import urllib.request
 from core.utils import (
+    HEADERS,
     canonical_cache_id,
     fetch_url_text,
     is_invalid_site_url,
@@ -19,6 +21,28 @@ from core.utils import (
     run_parallel,
     sanitize_discovered_url,
 )
+
+
+def _github_api_get_json(api_url, timeout=10, extra_accept=None):
+    """请求 GitHub REST API（自动携带 GITHUB_TOKEN 以提高搜索速率限制）"""
+    hdrs = dict(HEADERS)
+    hdrs["Accept"] = extra_accept or "application/vnd.github+json"
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        hdrs["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(api_url, headers=hdrs)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        raw = resp.read().decode("utf-8", errors="ignore")
+        return parse_json_lenient(raw)
+
+
+def _initial_cms_health_score(name, api, cms_keywords, origin="discovered"):
+    """命中主力关键词（索尼/非凡/量子/暴风等）的新域名给予高初始健康分以快速接管漂移"""
+    base = 82.0 if origin == "seed" else 60.0
+    combined = f"{name} {api}".lower()
+    if any(str(k).strip().lower() in combined for k in (cms_keywords or []) if str(k).strip()):
+        return max(base, 78.0)
+    return base
 
 
 def _cleanup_alias_cache_files(cache_dir, canonical_ids):
@@ -38,6 +62,7 @@ def _cleanup_alias_cache_files(cache_dir, canonical_ids):
 
 def load_or_init_source_registry(settings, seeds, dead_hosts):
     reg_file = settings.get("registry", {}).get("file", "source_registry.json")
+    cms_kws = settings.get("pinned", {}).get("cms_keywords", [])
     purged_existing = []
     registry = {
         "updated_at": "",
@@ -67,7 +92,6 @@ def load_or_init_source_registry(settings, seeds, dead_hosts):
     if not isinstance(registry.get("dynamic_vod_groups"), dict):
         registry["dynamic_vod_groups"] = {}
 
-    # 将上一轮沉淀的 dynamic_vod_groups 合并回 seeds["tvbox_vod_groups"]
     for grp in seeds.get("tvbox_vod_groups", []):
         gid = canonical_cache_id(grp.get("id") or grp.get("name") or "")
         dyn_urls = registry["dynamic_vod_groups"].get(gid, [])
@@ -133,8 +157,11 @@ def load_or_init_source_registry(settings, seeds, dead_hosts):
         if clean_api:
             norm = clean_api.rstrip("/")
             if norm not in purged_set and clean_api not in purged_set:
+                init_score = _initial_cms_health_score(
+                    it.get("name", ""), clean_api, cms_kws, it.get("origin", "discovered")
+                )
                 cms_map[norm] = {
-                    "health_score": 80.0 if it.get("origin") == "seed" else 60.0,
+                    "health_score": init_score,
                     **it,
                     "api": clean_api,
                 }
@@ -316,22 +343,59 @@ def sync_famous_vod_urls_from_nav(seeds, dead_hosts):
         print(f"定向动态寻址完成：已为 {', '.join(added_summary)} 补充最新候选")
 
 
-def _discover_github_active_repos(purged_set, existing_pages):
-    """利用 GitHub Search API 自动发现近 30 天内活跃更新的 TVBox / IPTV 仓库主页"""
+def _extract_repo_live_tree_urls(full_name, default_branch, purged_set, existing_live, dead_hosts):
+    """通过 GitHub Trees API 深度扫描活跃 IPTV 仓库子目录中的 .m3u / .txt 直播列表文件"""
+    found_live = []
+    try:
+        tree_api = (
+            f"https://api.github.com/repos/{full_name}/git/trees/"
+            f"{urllib.parse.quote(default_branch)}?recursive=1"
+        )
+        data = _github_api_get_json(tree_api, timeout=8)
+        tree = data.get("tree", []) if isinstance(data, dict) else []
+        for node in tree:
+            if not isinstance(node, dict) or node.get("type") != "blob":
+                continue
+            path = str(node.get("path", "")).strip()
+            low_p = path.lower()
+            if not low_p.endswith((".m3u", ".m3u8", ".txt")):
+                continue
+            if any(skip in low_p for skip in ("readme", "license", "changelog", "notice", "requirements")):
+                continue
+            if not (
+                low_p.endswith((".m3u", ".m3u8"))
+                or any(k in low_p for k in ("iptv", "live", "tv", "channel", "zhibo", "直播"))
+            ):
+                continue
+            raw_u = sanitize_discovered_url(
+                f"https://raw.githubusercontent.com/{full_name}/{default_branch}/{path}",
+                dead_hosts,
+            )
+            if raw_u and raw_u not in purged_set and raw_u not in existing_live:
+                found_live.append(raw_u)
+                if len(found_live) >= 2:
+                    break
+    except Exception:
+        pass
+    return found_live
+
+
+def _discover_github_active_repos(purged_set, existing_pages, existing_live, dead_hosts):
+    """利用 GitHub Search API 自动发现近 30 天活跃仓库主页，并深度提取 IPTV 仓库子目录直播源"""
     since_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
     queries = [
-        f"tvbox pushed:>{since_date} stars:>=5",
-        f"iptv m3u pushed:>{since_date} stars:>=10",
+        ("vod", f"tvbox pushed:>{since_date} stars:>=5"),
+        ("live", f"iptv m3u pushed:>{since_date} stars:>=10"),
     ]
-    found_pages = []
-    for q in queries:
+    found_pages, deep_live_urls = [], []
+    for q_kind, q in queries:
         try:
             api_url = (
                 "https://api.github.com/search/repositories?q="
                 + urllib.parse.quote(q)
                 + "&sort=updated&order=desc&per_page=8"
             )
-            data = parse_json_lenient(fetch_url_text(api_url, timeout=8))
+            data = _github_api_get_json(api_url, timeout=8)
             items = data.get("items", []) if isinstance(data, dict) else []
             for repo in items:
                 if not isinstance(repo, dict) or repo.get("archived") or repo.get("disabled"):
@@ -342,9 +406,65 @@ def _discover_github_active_repos(purged_set, existing_pages):
                 repo_url = f"https://github.com/{full_name}"
                 if repo_url not in purged_set and repo_url not in existing_pages:
                     found_pages.append(repo_url)
+                if q_kind == "live" and len(deep_live_urls) < 6:
+                    branch = str(repo.get("default_branch") or "main").strip()
+                    sub_lives = _extract_repo_live_tree_urls(
+                        full_name, branch, purged_set, existing_live, dead_hosts
+                    )
+                    for lu in sub_lives:
+                        if lu not in deep_live_urls:
+                            deep_live_urls.append(lu)
         except Exception:
             pass
-    return list(dict.fromkeys(found_pages))[:3]
+    return list(dict.fromkeys(found_pages))[:3], deep_live_urls[:6]
+
+
+def _discover_cms_apis_from_github_code(purged_set, existing_cms, dead_hosts):
+    """全网代码搜索最新提交中的苹果 CMS (/api.php/provide/vod) 采集接口地址"""
+    if not os.environ.get("GITHUB_TOKEN", "").strip():
+        return []
+    found_apis = []
+    try:
+        q = '"api.php/provide/vod" extension:json'
+        api_url = (
+            "https://api.github.com/search/code?q="
+            + urllib.parse.quote(q)
+            + "&sort=indexed&order=desc&per_page=10"
+        )
+        data = _github_api_get_json(
+            api_url,
+            timeout=9,
+            extra_accept="application/vnd.github.text-match+json",
+        )
+        items = data.get("items", []) if isinstance(data, dict) else []
+        url_re = re.compile(r"https?://[A-Za-z0-9.-]+(?::\d+)?/[A-Za-z0-9._~/-]*api\.php/provide/vod/?")
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            repo_name = str((it.get("repository") or {}).get("full_name", "")).lower()
+            if "hmz0123/" in repo_name:
+                continue
+            fragments = [
+                str(tm.get("fragment", ""))
+                for tm in (it.get("text_matches") or [])
+                if isinstance(tm, dict)
+            ]
+            for raw_u in url_re.findall("\n".join(fragments)):
+                clean_u = sanitize_discovered_url(raw_u, dead_hosts)
+                if not clean_u or is_invalid_site_url(clean_u):
+                    continue
+                norm_api = clean_u.split("?")[0].rstrip("/") + "/"
+                if (
+                    norm_api.rstrip("/") not in purged_set
+                    and norm_api.rstrip("/") not in existing_cms
+                    and norm_api not in found_apis
+                ):
+                    found_apis.append(norm_api)
+                    if len(found_apis) >= 12:
+                        return found_apis
+    except Exception:
+        pass
+    return found_apis
 
 
 def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_texts=None):
@@ -354,13 +474,32 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
     existing_vod = {x["url"] for x in registry.get("vod_sources", [])}
     existing_cms = {x["api"].rstrip("/") for x in registry.get("cms_apis", [])}
 
+    new_live, new_vod, new_cms, discovered_multi = [], [], [], []
     pages = list(dict.fromkeys(registry.get("discovery_pages", [])))
-    if extra_texts is None and len(pages) < 25:
-        gh_new = _discover_github_active_repos(purged_set, set(pages))
-        if gh_new:
-            pages.extend(gh_new)
-            registry["discovery_pages"] = list(dict.fromkeys(pages))
-            print(f"GitHub 活跃仓库自动巡检新增 {len(gh_new)} 个发现源: {', '.join(gh_new)}")
+
+    if extra_texts is None:
+        if len(pages) < 25:
+            gh_new, deep_lives = _discover_github_active_repos(
+                purged_set, set(pages), existing_live, dead_hosts
+            )
+            if gh_new:
+                pages.extend(gh_new)
+                registry["discovery_pages"] = list(dict.fromkeys(pages))
+                print(f"GitHub 活跃仓库自动巡检新增 {len(gh_new)} 个发现源: {', '.join(gh_new)}")
+            for lu in deep_lives:
+                if lu not in existing_live and lu not in purged_set:
+                    existing_live.add(lu)
+                    new_live.append(lu)
+            if deep_lives:
+                print(f"GitHub 仓库树深度扫描新增 {len(deep_lives)} 条直播源候选")
+
+        code_cms = _discover_cms_apis_from_github_code(purged_set, existing_cms, dead_hosts)
+        for cu in code_cms:
+            if cu.rstrip("/") not in existing_cms and cu.rstrip("/") not in purged_set:
+                existing_cms.add(cu.rstrip("/"))
+                new_cms.append(cu)
+        if code_cms:
+            print(f"全网代码搜寻新增 {len(code_cms)} 个 CMS 采集接口候选")
 
     pages = pages[:18]
 
@@ -374,7 +513,6 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
     fetched_pages = run_parallel(_safe_fetch_discovery_page, pages, workers=10)
     corpus_texts = list(extra_texts or []) + [txt for txt in fetched_pages if txt]
 
-    new_live, new_vod, new_cms, discovered_multi = [], [], [], []
     url_pattern = re.compile(
         r"https?://[A-Za-z0-9.-]+/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=-]+"
     )
@@ -419,7 +557,6 @@ def discover_new_upstream_sources(registry, seeds, settings, dead_hosts, extra_t
             else []
         )
         multi_entries = _extract_multi_repo_entries(list(dict.fromkeys(pool)), dead_hosts)
-        # 多仓反向裂变：同步把匹配关键词的新地址注入主力分组并收录进新点播源
         for lbl, sub_u in multi_entries:
             if sub_u in purged_set or "xhztv.top/xhz" in sub_u:
                 continue
@@ -438,6 +575,7 @@ def fetch_ziyuanzu_cms_candidates(settings):
     """拉取资源组高可用苹果CMS接口（支持本地快照容灾，全量版不做成人限制）"""
     cache_dir = settings.get("cache_dir", "cache")
     cache_file = os.path.join(cache_dir, "ziyuanzu_cms.json")
+    cms_kws = settings.get("pinned", {}).get("cms_keywords", [])
     raw_data, from_cache = None, False
     try:
         txt = fetch_url_text(settings.get("urls", {}).get("ziyuanzu_cms", ""), timeout=10)
@@ -491,16 +629,17 @@ def fetch_ziyuanzu_cms_candidates(settings):
             r"[^a-zA-Z0-9]", "", urllib.parse.urlsplit(clean_api).netloc
         )[:14]
         cats = item.get("categories") or []
+        site_name = str(item.get("name", "")).strip() or f"资源组_{idx + 1}"
         candidates.append(
             {
                 "key": f"zyz_{host_prefix or idx}",
-                "name": str(item.get("name", "")).strip() or f"资源组_{idx + 1}",
+                "name": site_name,
                 "api": clean_api,
                 "categories": cats if isinstance(cats, list) else [str(cats)],
                 "origin": "discovered",
                 "fail_streak": 0,
                 "latency": 999,
-                "health_score": 65.0,
+                "health_score": max(65.0, _initial_cms_health_score(site_name, clean_api, cms_kws)),
                 "last_ok_at": "",
             }
         )
@@ -522,6 +661,7 @@ def collect_vod_and_update_registry(
     purged_set = set(registry.get("purged_seeds", []))
     junk_kws = rules.get("junk_keywords", [])
     pan_kws = rules.get("pan_keywords", [])
+    cms_kws = settings.get("pinned", {}).get("cms_keywords", [])
 
     vod_items = registry.get("vod_sources", [])
     existing_vod = {x["url"] for x in vod_items}
@@ -557,12 +697,11 @@ def collect_vod_and_update_registry(
                     "origin": "discovered",
                     "fail_streak": 0,
                     "latency": 999,
-                    "health_score": 60.0,
+                    "health_score": _initial_cms_health_score("", api_u, cms_kws),
                     "last_ok_at": "",
                 },
             )
 
-    # 修复 backup_map 映射断裂：确保每个主力分组至少有一条入口在 vod_items 中，且组内任意 URL 均可匹配整组候选
     backup_map = {}
     canonical_ids = []
     for g in seeds.get("tvbox_vod_groups", []):
@@ -652,7 +791,6 @@ def collect_vod_and_update_registry(
                                 ensure_ascii=False,
                                 indent=2,
                             )
-                        # 将本轮实际跑通的 cand_u 置顶写入 dynamic_vod_groups 持久化自愈
                         prev_dyn = dyn_groups.get(sid, [])
                         merged_dyn = [cand_u] + [
                             u for u in (prev_dyn + candidates) if u != cand_u and u not in purged_set
@@ -769,7 +907,7 @@ def collect_vod_and_update_registry(
                     "origin": "discovered",
                     "fail_streak": 0,
                     "latency": 999,
-                    "health_score": 60.0,
+                    "health_score": _initial_cms_health_score(sc["name"], api, cms_kws),
                     "last_ok_at": "",
                 }
                 extracted_cnt += 1
