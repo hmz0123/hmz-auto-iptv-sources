@@ -362,7 +362,7 @@ def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
     for s in sites:
         if not isinstance(s, dict):
             continue
-        if is_douban_home_site(s):
+        if is_douban_home_site(s) or str(s.get("name", "")).startswith("🔍片库筛选·"):
             filtered.append(s)
             continue
 
@@ -831,7 +831,7 @@ def _enrich_top_cms_categories_and_filters(sites, top_n=25):
 def _rebalance_tv_site_tiers(sites, settings, pan_kws, invalid_kws, enrich_top_n=25):
     """
     电视端黄金梯队重排 + 统一聚搜(quickSearch)配额分配（尊重真实分片下载速度）：
-      T1: 唯一自建多分类聚搜首页置顶
+      T1: 自建多分类聚搜首页 + 第二屏片库筛选/兜底豆瓣筛选
       T2: 优质快速直连站（优先真分片下载通畅的高速源）
       T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌、立播等）
       T4: 普通存活直连站
@@ -852,7 +852,7 @@ def _rebalance_tv_site_tiers(sites, settings, pan_kws, invalid_kws, enrich_top_n
         is_pan = is_pan_site(s, pan_kws, invalid_kws)
         is_special = any(kw in name_str for kw in SPECIAL_SITE_KEYWORDS)
 
-        if is_douban_home_site(s):
+        if is_douban_home_site(s) or name_str.startswith("🔍片库筛选·"):
             tier = 1
         elif is_pan:
             tier = 3
