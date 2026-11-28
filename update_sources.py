@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 import json
 import os
@@ -163,6 +164,139 @@ WOGG_LIKE_KEYWORDS = (
     "mogg",
     "木偶",
 )
+
+LIVE_GENRE_ALIAS_MAP = {
+    "体育": "体育频道",
+    "央视频道": "CCTV央视频道",
+    "央视": "CCTV央视频道",
+    "卫视频道": "地方卫视频道",
+    "卫视": "地方卫视频道",
+    "港澳台频道": "港澳台",
+    "港澳台直播": "港澳台",
+}
+
+ALLOWED_LIVE_SCHEMES = (
+    "http",
+    "https",
+    "rtmp",
+    "rtsp",
+    "udp",
+    "rtp",
+    "mms",
+    "p2p",
+    "mitv",
+)
+
+
+def _normalize_live_genre(raw_genre):
+    """剥离直播分组中的 Emoji 与装饰性符号，并归一化常见同义分组"""
+    cleaned = re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_/&]+", "", str(raw_genre or "")).strip()
+    if cleaned in LIVE_GENRE_ALIAS_MAP:
+        return LIVE_GENRE_ALIAS_MAP[cleaned]
+    return cleaned if cleaned else "综合频道"
+
+
+def _sanitize_live_stream_url(raw_url):
+    """清洗直播流地址尾部的引号、字面量转义符（\\r/\\n）及非法协议头"""
+    if not raw_url:
+        return ""
+    url = str(raw_url).strip()
+    # 清除文本中直接残留的字面量转义符（如 \r\n）
+    url = url.replace("\\r", "").replace("\\n", "").replace("\\t", "")
+    # 剥离首尾残留引号、逗号、分号及不可见控制字符
+    url = url.strip("\"'`,; \t\r\n\x00-\x1f\x7f")
+    if not url:
+        return ""
+
+    # 兼容 TVBox 多源井号拼接格式（url1#url2）
+    parts = [p.strip("\"'`,; \t\r\n\x00-\x1f\x7f") for p in url.split("#") if p.strip()]
+    valid_parts = []
+    for part in parts:
+        try:
+            parsed = urlparse(part)
+            if parsed.scheme.lower() in ALLOWED_LIVE_SCHEMES and parsed.netloc:
+                valid_parts.append(part)
+        except Exception:
+            continue
+    return "#".join(valid_parts)
+
+
+def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
+    """
+    对生成的 tvbox_live.txt 执行后置标准化清洗：
+      1. 合并带 Emoji 与不带 Emoji 的重复 #genre# 分类（如 🏀体育频道 与 体育频道）
+      2. 净化频道 URL 尾部的多余双引号与 \\r\\n 脏字符
+      3. 同分组内按 (频道名, 净化后URL) 精确去重
+    """
+    if not os.path.exists(filepath):
+        return fallback_count
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            raw_lines = f.readlines()
+    except Exception:
+        return fallback_count
+
+    header_comments = []
+    grouped_channels = OrderedDict()
+    seen_in_group = {}
+    current_genre = "综合频道"
+    seen_first_genre = False
+
+    for line in raw_lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # 保留文件顶部的元信息注释行（如更新时间统计）
+        if not seen_first_genre and stripped.startswith("#"):
+            header_comments.append(stripped)
+            continue
+
+        if stripped.endswith(",#genre#"):
+            seen_first_genre = True
+            raw_g = stripped[: -len(",#genre#")]
+            current_genre = _normalize_live_genre(raw_g)
+            grouped_channels.setdefault(current_genre, [])
+            seen_in_group.setdefault(current_genre, set())
+            continue
+
+        if "," in stripped and "://" in stripped:
+            seen_first_genre = True
+            ch_name, raw_u = stripped.split(",", 1)
+            ch_name = ch_name.strip().strip("\"'")
+            clean_u = _sanitize_live_stream_url(raw_u)
+            if not ch_name or not clean_u:
+                continue
+
+            grouped_channels.setdefault(current_genre, [])
+            seen_in_group.setdefault(current_genre, set())
+            dedup_key = (ch_name, clean_u)
+            if dedup_key not in seen_in_group[current_genre]:
+                seen_in_group[current_genre].add(dedup_key)
+                grouped_channels[current_genre].append(f"{ch_name},{clean_u}")
+
+    if not grouped_channels:
+        return fallback_count
+
+    out_lines = list(header_comments)
+    total_channels = 0
+    for genre, items in grouped_channels.items():
+        if not items:
+            continue
+        if out_lines:
+            out_lines.append("")
+        out_lines.append(f"{genre},#genre#")
+        out_lines.extend(items)
+        total_channels += len(items)
+
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(out_lines) + "\n")
+    except Exception:
+        return fallback_count
+
+    return total_channels
 
 
 def _parse_iso_ts(ts_str):
@@ -786,7 +920,8 @@ def main():
     new_live, new_vod, new_cms = discover_new_upstream_sources(
         registry, seeds, settings, dead_hosts
     )
-    live_cnt = process_live_sources_and_build(registry, new_live, tag, settings)
+    raw_live_cnt = process_live_sources_and_build(registry, new_live, tag, settings)
+    live_cnt = _post_sanitize_tvbox_live_txt("tvbox_live.txt", fallback_count=raw_live_cnt)
 
     (
         cms_map,
