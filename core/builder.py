@@ -399,11 +399,30 @@ def build_douban_site(settings=None, abs_base_prefix=None, version_tag=""):
     }
 
 
-def build_douban_filter_site():
+def _extract_fallback_douban_jar(site_pool):
+    """从已采集的爬虫站中提取支持 csp_Douban 的外部有效 JAR 链接作为冗余兜底"""
+    best_jar, any_jar = "", ""
+    for s in site_pool or []:
+        if not isinstance(s, dict):
+            continue
+        jar_u = str(s.get("jar", "")).strip()
+        if not jar_u.startswith(("http://", "https://")):
+            continue
+        if not any_jar:
+            any_jar = jar_u
+        api_low = str(s.get("api", "")).lower()
+        jar_low = jar_u.lower()
+        if "douban" in api_low or any(tag in jar_low for tag in ("fan", "pg", "ok", "wex", "fty")):
+            best_jar = jar_u
+            break
+    return best_jar or any_jar
+
+
+def build_douban_filter_site(fallback_jar=""):
     """
-    第 2 位：内置豆瓣片库筛选源（承担全网“按类型/地区/年代/排序”多维筛选，选片后自动全网搜源播放）
+    兜底第二屏：内置豆瓣片库筛选源（挂载动态提取的外部 JAR，确保 csp_Douban 可用且不空屏）
     """
-    return {
+    node = {
         "key": "hmz_douban_filter",
         "name": "🔍豆瓣片库·按地区年代筛选",
         "type": 3,
@@ -413,6 +432,9 @@ def build_douban_filter_site():
         "filterable": 1,
         "changeable": 0,
     }
+    if fallback_jar:
+        node["jar"] = fallback_jar
+    return node
 
 
 def _extract_m3u8_urls(detail_text):
@@ -584,10 +606,11 @@ def _match_keywords(site, keywords):
 
 def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     """
-    黄金前排编排：
+    黄金前排编排（双保险第二屏机制）：
     - 第 1 位：自建纯海报聚搜首页（今日热播·点击全网搜源）
-    - 第 2 位：内置豆瓣片库筛选源（支持按地区/年代/类型多维筛选）
-    - 第 3 位起：置顶网盘站 -> 真分片测速通畅采集站（已精简分类） -> 其余常规站
+    - 第 2 位（主力首选）：测速最快且通过完整分类/片源校验的直连采集站（🔍片库筛选·...）
+    - 第 2 位（冗余兜底）：若直连站均未通过质量校验，自动挂载外部有效 JAR 启用豆瓣筛选源
+    - 第 3 位起：置顶网盘站 -> 真分片测速通畅采集站 -> 其余常规站
     """
     pinned_cfg = settings.get("pinned", {})
     home_kws = pinned_cfg.get("home_prefer_cms_keywords", [])
@@ -596,10 +619,6 @@ def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
     qs_top_n = int(pinned_cfg.get("quick_search_top_n", 22))
 
-    top_hubs = [
-        build_douban_site(settings=settings, version_tag=version_tag),
-        build_douban_filter_site(),
-    ]
     others = [s for s in sites if not is_douban_home_site(s)]
 
     cms_candidates = [
@@ -642,6 +661,28 @@ def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
 
     cms_sorted = sorted(cms_candidates, key=cms_rank_tuple)
     pan_sorted = sorted(pan_candidates, key=pan_rank_tuple)
+
+    # 第 1 屏固定为自建纯海报聚搜首页
+    top_hubs = [build_douban_site(settings=settings, version_tag=version_tag)]
+
+    # 筛选具备完整分类与片源的最快直连 CMS 站作为第二屏主力
+    qualified_cms_hubs = [
+        s for s in cms_sorted
+        if s.get("_has_valid_hub_content") and len(s.get("categories") or []) >= 4
+    ]
+    if qualified_cms_hubs:
+        best_cms = dict(qualified_cms_hubs[0])
+        clean_cms_name = re.sub(r"^[⚡🔍🎬]+\s*", "", str(best_cms.get("name", ""))).strip()
+        best_cms["name"] = f"🔍片库筛选·{clean_cms_name}"
+        best_cms["filterable"] = 1
+        best_cms["changeable"] = 1
+        top_hubs.append(best_cms)
+        # 从后续列表剔除已置顶的第二屏主力站，避免重复出现
+        cms_sorted = [s for s in cms_sorted if s.get("api") != best_cms.get("api")]
+    else:
+        # 冗余兜底：当直连站均未通过质量校验时，自动提取外部有效 JAR 启用豆瓣筛选源
+        fallback_jar = _extract_fallback_douban_jar(spider_other + pan_sorted)
+        top_hubs.append(build_douban_filter_site(fallback_jar=fallback_jar))
 
     top_pan = pan_sorted[:6]
     rem_pan = pan_sorted[6:]
@@ -887,7 +928,7 @@ def filter_and_sort_parses(parses):
 
 
 def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", version_tag=""):
-    """生成精简版 tvbox_lite.json（共用自建聚搜首页 + 豆瓣筛选 + 复用真实分片测速 + 过滤成人/敏感站点）"""
+    """生成精简版 tvbox_lite.json（共用自建聚搜首页 + 双保险第二屏 + 复用真实分片测速 + 过滤成人/敏感站点）"""
     ed = settings.get("editions", {})
     pan_kws = settings.get("pinned", {}).get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
@@ -1028,6 +1069,8 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
         for idx, s in enumerate(pan_list[:pan_max])
     ]
 
+    fallback_jar = _extract_fallback_douban_jar(sites)
+
     return ensure_standard_refs(
         {
             "updated_at": tag,
@@ -1037,7 +1080,7 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
             "sites": strip_internal_meta(
                 [
                     build_douban_site(settings=settings, version_tag=version_tag),
-                    build_douban_filter_site(),
+                    build_douban_filter_site(fallback_jar=fallback_jar),
                 ]
                 + graded
             ),
@@ -1357,7 +1400,7 @@ def write_actions_summary(
             f"| 指标 | 数值 |\n| :--- | :--- |\n"
             f"| 统一聚搜首页 (`home.json`) | **{home_cnt}** 部精选影视（已剔除短剧，六大核心分类混排） |\n"
             f"| 全量版 (`tvbox.json`) | **{full_cnt}** 站{_fmt_delta(full_cnt, prev.get('full'))}（含网盘 **{pan_cnt}** 站{_fmt_delta(pan_cnt, prev.get('pan_in_full'))}） |\n"
-            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（统一首页 + 豆瓣筛选 + 真分片测速） |\n"
+            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（统一首页 + 双保险片库筛选 + 真分片测速） |\n"
             f"| 网盘专版 (`tvbox_pan.json`) | **{pan_only_cnt}** 站{_fmt_delta(pan_only_cnt, prev.get('pan_only'))}（统一首页 + 豆瓣筛选 + 并发网盘） |\n"
             f"| 精选直播 (`tvbox_live.txt`) | **{live_cnt}** 条{_fmt_delta(live_cnt, prev.get('live'))} |\n"
             f"| JAR 本地镜像 | **{jar_stats[2]}** 个（总存活 {jar_stats[0]}，剔除死链 {jar_stats[1]}） |\n"
