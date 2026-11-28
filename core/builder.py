@@ -22,10 +22,10 @@ from core.utils import (
 
 GH_RAW = "https://raw.githubusercontent.com"
 
-# 内置外部公共 GitHub 加速代理监控榜单（作为 discovery_pages 的补充猎手源）
+# 内置外部公共 GitHub 加速代理监控榜单（已移除失效的 mirror.ghproxy.com）
 BUILTIN_PROXY_RADAR_URLS = [
     "https://ghproxy.link/",
-    "https://mirror.ghproxy.com/",
+    "https://ghfast.top/",
 ]
 
 # 电视端网盘统一 Token 挂载协议路径（兼容 OK影视PRO / 影视仓 / NEWBOX / TVBox 饭太硬与 OK 系 JAR）
@@ -81,11 +81,25 @@ def _normalize_pan_site_ext(site):
     return sc
 
 
+def is_douban_home_site(site):
+    """统一判定自建或上游的豆瓣首页推荐站"""
+    if not isinstance(site, dict):
+        return False
+    k = str(site.get("key", "")).strip().lower()
+    name = str(site.get("name", "")).strip()
+    api = str(site.get("api", "")).strip().lower()
+    return (
+        k in ("douban_rank", "douban", "豆瓣")
+        or api == "csp_douban"
+        or "祝您观影愉快" in name
+    )
+
+
 def build_douban_site():
-    """增强版豆瓣源：内置标准影视/榜单分类 ext，避免电视端顶部分类栏为空"""
+    """唯一自建豆瓣推荐首页：内置标准影视/榜单分类 ext，永远固定在首位"""
     return {
         "key": "douban_rank",
-        "name": "🎬豆瓣热播·评分排行榜",
+        "name": "🎬祝您观影愉快·豆瓣热播",
         "type": 3,
         "api": "csp_Douban",
         "searchable": 1,
@@ -276,8 +290,8 @@ def _match_keywords(site, keywords):
 
 def arrange_sites_smart_order(sites, settings, rules):
     """
-    豆瓣置顶 + 分层黄金前排：
-    - 第 1 位：增强版豆瓣热播榜
+    豆瓣置顶（唯一） + 分层黄金前排：
+    - 第 1 位：自建唯一豆瓣热播榜（过滤所有上游重复豆瓣）
     - 第 2 位起：置顶网盘站 -> 置顶秒播采集站 -> 其余常规站
     """
     pinned_cfg = settings.get("pinned", {})
@@ -287,8 +301,9 @@ def arrange_sites_smart_order(sites, settings, rules):
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
     qs_top_n = int(pinned_cfg.get("quick_search_top_n", 12))
 
-    douban = [s for s in sites if s.get("key") == "douban_rank"] or [build_douban_site()]
-    others = [s for s in sites if s.get("key") != "douban_rank"]
+    # 统一收敛所有豆瓣入口，只保留唯一自建的 build_douban_site()
+    douban = [build_douban_site()]
+    others = [s for s in sites if not is_douban_home_site(s)]
 
     cms_candidates = [
         s for s in others if s.get("type") in (0, 1) and not is_pan_site(s, pan_kws, invalid_kws)
@@ -335,7 +350,7 @@ def arrange_sites_smart_order(sites, settings, rules):
     tail_cms = cms_sorted[6:]
 
     ordered = (
-        douban[:1]
+        douban
         + top_pan
         + top_cms
         + spider_other
@@ -346,7 +361,7 @@ def arrange_sites_smart_order(sites, settings, rules):
     final_ordered = []
     for idx, item in enumerate(ordered):
         sc = dict(item)
-        if sc.get("key") != "douban_rank":
+        if not is_douban_home_site(sc):
             sc["quickSearch"] = 1 if idx < qs_top_n else 0
         final_ordered.append(sc)
     return final_ordered
@@ -563,7 +578,6 @@ def filter_and_sort_parses(parses):
                     lat = round((time.time() - t0) * 1000)
                     body = resp.read(4096).decode("utf-8", errors="ignore")
                     if _is_real_parse_response(p_type, body):
-                        # type=1 JSON 直连解析优先于 type=0 Web 嗅探解析
                         type_prio = 0 if p_type == 1 else 1
                         return (type_prio, lat, idx, p)
         except Exception:
@@ -587,20 +601,20 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
     sites = [
         s
         for s in full_tv_with_meta.get("sites", [])
-        if not is_adult_or_sensitive_site(s, adult_kws)
+        if not is_adult_or_sensitive_site(s, adult_kws) and not is_douban_home_site(s)
     ]
 
     max_src_lat = int(ed.get("lite_max_source_latency", 1200))
     max_pan = int(ed.get("lite_max_pan_sites", 25))
     max_extra = int(ed.get("lite_max_extra_spider_sites", 25))
-    max_cms_lat = int(ed.get("lite_max_cms_latency", 900))
-    max_cms = int(ed.get("lite_max_cms_sites", 25))
+    max_cms_lat = int(ed.get("lite_max_cms_latency", 650))
+    max_cms = int(ed.get("lite_max_cms_sites", 18))
 
     pan_list = sorted(
         [
             _normalize_pan_site_ext(s)
             for s in sites
-            if s.get("key") != "douban_rank" and is_pan_site(s, pan_kws, invalid_kws)
+            if is_pan_site(s, pan_kws, invalid_kws)
         ],
         key=lambda x: (
             0 if "_src_id" not in x else 1,
@@ -621,8 +635,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
         [
             s
             for s in sites
-            if s.get("key") != "douban_rank"
-            and s.get("type") not in (0, 1)
+            if s.get("type") not in (0, 1)
             and not is_pan_site(s, pan_kws, invalid_kws)
         ],
         key=lambda x: (
@@ -674,7 +687,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
             "spider": "./custom_spider.jar",
             "wallpaper": full_tv_with_meta.get("wallpaper", "https://eees.cc"),
             "lives": full_tv_with_meta.get("lives", []),
-            "sites": strip_internal_meta(ordered_sites),
+            "sites": ordered_sites,
             "parses": full_tv_with_meta.get("parses", [])[:8],
             "flags": full_tv_with_meta.get("flags", []),
             "ijk": full_tv_with_meta.get("ijk", []),
@@ -698,7 +711,7 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
         [
             _normalize_pan_site_ext(s)
             for s in sites
-            if s.get("key") != "douban_rank" and is_pan_site(s, pan_kws, invalid_kws)
+            if not is_douban_home_site(s) and is_pan_site(s, pan_kws, invalid_kws)
         ],
         key=lambda x: (
             0 if "_src_id" not in x else 1,
