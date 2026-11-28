@@ -22,14 +22,185 @@ from core.utils import (
 
 GH_RAW = "https://raw.githubusercontent.com"
 
-# 内置外部公共 GitHub 加速代理监控榜单（已移除失效的 mirror.ghproxy.com）
 BUILTIN_PROXY_RADAR_URLS = [
     "https://ghproxy.link/",
     "https://ghfast.top/",
 ]
 
-# 电视端网盘统一 Token 挂载协议路径（兼容 OK影视PRO / 影视仓 / NEWBOX / TVBox 饭太硬与 OK 系 JAR）
 DEFAULT_CLOUD_DRIVE_PATH = "tvfan/Cloud-drive.txt"
+
+HOME_CATEGORY_SPECS = [
+    ("1", "热门电影", ("电影", "动作片", "喜剧片", "科幻片", "爱情片", "剧情片")),
+    ("2", "热播剧集", ("电视剧", "国产剧", "连续剧", "欧美剧", "韩剧", "港剧")),
+    ("3", "王牌综艺", ("综艺", "大陆综艺", "港台综艺", "日韩综艺")),
+    ("4", "高分动漫", ("动漫", "国产动漫", "日韩动漫", "动画")),
+    ("5", "精选短剧", ("短剧", "爽剧", "微短剧")),
+]
+
+CLEAN_TITLE_NOISE_RE = re.compile(
+    r"[\[\(（【](?:4k|2160p?|1080p?|720p?|hd|bd|tc|ts|抢先版?|枪版|国语|粤语|中字|双字|完结|更新至\d+集?|全\d+集?)[\]\)）】]",
+    flags=re.IGNORECASE,
+)
+
+
+def _clean_vod_title_for_search(raw_title):
+    title = str(raw_title or "").strip()
+    title = CLEAN_TITLE_NOISE_RE.sub("", title).strip()
+    title = re.sub(
+        r"\s+(?:4k|2160p?|1080p?|720p?|hd|tc|ts|国语中字|双语字幕|高清版)$",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    ).strip()
+    return title
+
+
+def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
+    """
+    从真实测速通畅的前排直连 CMS 站聚合热门片单生成静态 home.json：
+    - 零外部 JAR 依赖，首屏秒开永不空白
+    - 不写入有效播放地址，TVBox 家族客户端点击海报自动触发全网聚搜
+    """
+    repo_owner_path = settings.get("repo_owner_path", "hmz0123/hmz-auto-iptv-sources").strip("/")
+    repo_branch = settings.get("repo_branch", "main").strip("/")
+    candidates = [
+        s for s in (cms_sites or [])
+        if isinstance(s, dict)
+        and s.get("type") == 1
+        and str(s.get("api", "")).startswith(("http://", "https://"))
+    ][:4]
+
+    buckets = {cid: [] for cid, _, _ in HOME_CATEGORY_SPECS}
+    seen_titles = set()
+
+    for site in candidates:
+        base_api = re.sub(r"[?&]ac=list.*", "", str(site.get("api", "")).rstrip("/"))
+        sep = "&" if "?" in base_api else "?"
+        raw_classes = site.get("_raw_classes") or []
+        cat_id_map = {}
+        for item in raw_classes:
+            if not isinstance(item, dict):
+                continue
+            t_id = str(item.get("type_id", "")).strip()
+            t_name = str(item.get("type_name", "")).strip()
+            if not t_id or not t_name:
+                continue
+            for cid, _, aliases in HOME_CATEGORY_SPECS:
+                if cid not in cat_id_map and any(a == t_name or a in t_name for a in aliases):
+                    cat_id_map[cid] = t_id
+                    break
+
+        fetch_targets = list(cat_id_map.items()) if cat_id_map else [("1", "")]
+        for cid, remote_tid in fetch_targets:
+            if len(buckets[cid]) >= 24:
+                continue
+            q_url = f"{base_api}{sep}ac=detail&pg=1" + (f"&t={urllib.parse.quote(remote_tid)}" if remote_tid else "")
+            try:
+                txt = fetch_url_text(q_url, timeout=4.5)
+                parsed = parse_json_lenient(txt)
+                items = parsed.get("list") if isinstance(parsed, dict) else []
+                if not isinstance(items, list):
+                    continue
+                for v in items:
+                    if not isinstance(v, dict):
+                        continue
+                    clean_name = _clean_vod_title_for_search(v.get("vod_name", ""))
+                    pic = str(v.get("vod_pic", "")).strip()
+                    if not clean_name or len(clean_name) < 2 or not pic.startswith(("http://", "https://")):
+                        continue
+                    if clean_name in seen_titles:
+                        continue
+                    seen_titles.add(clean_name)
+
+                    target_cid = cid
+                    if not cat_id_map:
+                        type_lbl = str(v.get("type_name", ""))
+                        for c_id, _, aliases in HOME_CATEGORY_SPECS:
+                            if any(a in type_lbl for a in aliases):
+                                target_cid = c_id
+                                break
+                    if len(buckets[target_cid]) >= 24:
+                        continue
+
+                    cat_name = next((cname for c_id, cname, _ in HOME_CATEGORY_SPECS if c_id == target_cid), "热门推荐")
+                    remark = str(v.get("vod_remarks", "")).strip()
+                    year = str(v.get("vod_year", "")).strip()
+                    area = str(v.get("vod_area", "")).strip()
+                    blurb = re.sub(r"<[^>]+>", "", str(v.get("vod_content", "") or v.get("vod_blurb", ""))).strip()[:120]
+
+                    buckets[target_cid].append({
+                        "vod_id": f"hmz_{len(seen_titles)}",
+                        "type_id": int(target_cid),
+                        "type_name": cat_name,
+                        "vod_name": clean_name,
+                        "vod_pic": pic,
+                        "vod_remarks": f"{remark} · 点片名全网搜" if remark else "点击片名全网搜源",
+                        "vod_year": year,
+                        "vod_area": area,
+                        "vod_content": blurb or f"《{clean_name}》聚合推荐，点击立即全网搜索4K网盘与极速直连线路。",
+                        "vod_play_from": "",
+                        "vod_play_url": "",
+                    })
+            except Exception:
+                continue
+
+    interleaved = []
+    max_bucket_len = max((len(v) for v in buckets.values()), default=0)
+    for idx in range(max_bucket_len):
+        for cid, _, _ in HOME_CATEGORY_SPECS:
+            if idx < len(buckets[cid]):
+                interleaved.append(buckets[cid][idx])
+
+    if not interleaved and os.path.exists(output_path):
+        try:
+            with open(output_path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+                if isinstance(existing, dict) and existing.get("list"):
+                    print(f"首页聚合未拉到新数据，沿用历史 {output_path}（{len(existing['list'])} 条）")
+                    return len(existing["list"])
+        except Exception:
+            pass
+
+    if not interleaved:
+        interleaved = [
+            {
+                "vod_id": "hmz_default_1",
+                "type_id": 1,
+                "type_name": "热门电影",
+                "vod_name": "庆余年",
+                "vod_pic": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2907693868.jpg",
+                "vod_remarks": "点击右上角搜索或点片名搜全网",
+                "vod_year": "2024",
+                "vod_area": "大陆",
+                "vod_content": "自动聚合全网4K网盘与极速直连线路。",
+                "vod_play_from": "",
+                "vod_play_url": "",
+            }
+        ]
+
+    home_payload = {
+        "code": 1,
+        "msg": "数据列表",
+        "page": 1,
+        "pagecount": 1,
+        "limit": len(interleaved),
+        "total": len(interleaved),
+        "home_source_url": f"{GH_RAW}/{repo_owner_path}/{repo_branch}/{output_path}",
+        "class": [
+            {"type_id": cid, "type_name": cname}
+            for cid, cname, _ in HOME_CATEGORY_SPECS
+        ],
+        "list": interleaved[:100],
+    }
+
+    try:
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(home_payload, f, ensure_ascii=False, indent=2)
+        print(f"自建多分类聚搜首页生成完成：{output_path} 共 {len(home_payload['list'])} 部精选影片")
+    except Exception as e:
+        print(f"写入 {output_path} 失败: {e}")
+
+    return len(home_payload["list"])
 
 
 def write_pan_token_template(filepath="token_template.json"):
@@ -60,11 +231,7 @@ def write_pan_token_template(filepath="token_template.json"):
 
 
 def _normalize_pan_site_ext(site):
-    """
-    规范化网盘站点 ext 传参结构：
-    - 若 ext 为 JSON 字符串或 dict，统一补充 Cloud-drive 协议路径以便一键联动本地 Token；
-    - 若 ext 为纯 http(s) 网址字符串，保持原样以兼容仅接收 URL 的网盘爬虫。
-    """
+    """规范化网盘站点 ext 传参结构，为支持 JSON 传参的网盘爬虫补充 Cloud-drive 协议路径"""
     sc = dict(site)
     ext = sc.get("ext")
     if isinstance(ext, dict):
@@ -74,51 +241,57 @@ def _normalize_pan_site_ext(site):
     elif isinstance(ext, str):
         stripped = ext.strip()
         if stripped.startswith("{") and stripped.endswith("}"):
-            parsed = parse_json_lenient(stripped)
-            if isinstance(parsed, dict):
-                parsed.setdefault("Cloud-drive", DEFAULT_CLOUD_DRIVE_PATH)
-                sc["ext"] = json.dumps(parsed, ensure_ascii=False)
+            try:
+                parsed = parse_json_lenient(stripped)
+                if isinstance(parsed, dict):
+                    parsed.setdefault("Cloud-drive", DEFAULT_CLOUD_DRIVE_PATH)
+                    sc["ext"] = json.dumps(parsed, ensure_ascii=False)
+            except Exception:
+                pass
     return sc
 
 
 def is_douban_home_site(site):
-    """统一判定自建或上游的豆瓣首页推荐站"""
+    """统一判定自建聚合首页或上游豆瓣推荐站"""
     if not isinstance(site, dict):
         return False
     k = str(site.get("key", "")).strip().lower()
     name = str(site.get("name", "")).strip()
     api = str(site.get("api", "")).strip().lower()
     return (
-        k in ("douban_rank", "douban", "豆瓣")
+        k in ("hmz_home_hub", "douban_rank", "douban", "豆瓣")
         or api == "csp_douban"
+        or api.endswith("/home.json")
         or "祝您观影愉快" in name
+        or "点击全网搜源" in name
     )
 
 
-def build_douban_site():
-    """唯一自建豆瓣推荐首页：内置标准影视/榜单分类 ext，永远固定在首位"""
+def build_douban_site(settings=None, abs_base_prefix=None, version_tag=""):
+    """
+    唯一自建多分类聚搜首页（所有配置共用）：
+    - 零外部 JAR 依赖，毫秒级渲染海报墙
+    - 点片名自动触发全网后台源并发聚搜
+    """
+    cfg = settings or {}
+    repo_owner_path = cfg.get("repo_owner_path", "hmz0123/hmz-auto-iptv-sources").strip("/")
+    repo_branch = cfg.get("repo_branch", "main").strip("/")
+    if abs_base_prefix:
+        home_api = f"{abs_base_prefix.rstrip('/')}/home.json"
+    else:
+        home_api = f"{GH_RAW}/{repo_owner_path}/{repo_branch}/home.json"
+    if version_tag:
+        home_api = append_cache_buster(home_api, version_tag)
+
     return {
-        "key": "douban_rank",
-        "name": "🎬祝您观影愉快·豆瓣热播",
-        "type": 3,
-        "api": "csp_Douban",
-        "searchable": 1,
-        "quickSearch": 1,
-        "filterable": 1,
-        "ext": json.dumps(
-            {
-                "class": [
-                    {"type_id": "movie", "type_name": "电影"},
-                    {"type_id": "tv", "type_name": "电视剧"},
-                    {"type_id": "show", "type_name": "综艺"},
-                    {"type_id": "anime", "type_name": "动漫"},
-                    {"type_id": "top250", "type_name": "豆瓣Top250"},
-                    {"type_id": "weekly_movie", "type_name": "一周口碑电影"},
-                    {"type_id": "weekly_tv", "type_name": "全球口碑剧集"},
-                ]
-            },
-            ensure_ascii=False,
-        ),
+        "key": "hmz_home_hub",
+        "name": "🎬今日热播·点击全网搜源",
+        "type": 1,
+        "api": home_api,
+        "searchable": 0,
+        "quickSearch": 0,
+        "filterable": 0,
+        "changeable": 0,
     }
 
 
@@ -250,11 +423,11 @@ def _probe_single_cms_segment_speed(site):
         return 0, 9999
 
 
-def speedtest_cms_segments(cms_sites, top_n=12, workers=16):
+def speedtest_cms_segments(cms_sites, top_n=18, workers=16):
     """并发对前 top_n 个 CMS 采集站做 TS 分片真实下载测速"""
     if not cms_sites or top_n <= 0:
         return cms_sites
-    effective_top = min(int(top_n), 12)
+    effective_top = min(int(top_n), 20)
     head = [dict(s) for s in cms_sites[:effective_top]]
     tail = [dict(s) for s in cms_sites[effective_top:]]
 
@@ -265,6 +438,7 @@ def speedtest_cms_segments(cms_sites, top_n=12, workers=16):
         sc["_seg_ttfb_ms"] = ttfb
         if spd > 0:
             clean_name = re.sub(r"\(\d+ms\)$", "", str(sc.get("name", "")))
+            clean_name = re.sub(r"·\d+KB/s$", "", clean_name)
             sc["name"] = f"{clean_name}·{int(spd)}KB/s({ttfb}ms)"
         return sc
 
@@ -288,21 +462,20 @@ def _match_keywords(site, keywords):
     return any(str(k).strip().lower() in blob for k in keywords if str(k).strip())
 
 
-def arrange_sites_smart_order(sites, settings, rules):
+def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     """
-    豆瓣置顶（唯一） + 分层黄金前排：
-    - 第 1 位：自建唯一豆瓣热播榜（过滤所有上游重复豆瓣）
-    - 第 2 位起：置顶网盘站 -> 置顶秒播采集站 -> 其余常规站
+    自建聚搜首页置顶（唯一） + 分层黄金前排：
+    - 第 1 位：自建多分类聚搜首页
+    - 第 2 位起：置顶网盘站 -> 真分片测速通畅采集站 -> 其余常规站
     """
     pinned_cfg = settings.get("pinned", {})
     home_kws = pinned_cfg.get("home_prefer_cms_keywords", [])
     cms_kws = pinned_cfg.get("cms_keywords", [])
     pan_kws = pinned_cfg.get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
-    qs_top_n = int(pinned_cfg.get("quick_search_top_n", 12))
+    qs_top_n = int(pinned_cfg.get("quick_search_top_n", 22))
 
-    # 统一收敛所有豆瓣入口，只保留唯一自建的 build_douban_site()
-    douban = [build_douban_site()]
+    douban = [build_douban_site(settings=settings, version_tag=version_tag)]
     others = [s for s in sites if not is_douban_home_site(s)]
 
     cms_candidates = [
@@ -344,10 +517,10 @@ def arrange_sites_smart_order(sites, settings, rules):
     cms_sorted = sorted(cms_candidates, key=cms_rank_tuple)
     pan_sorted = sorted(pan_candidates, key=pan_rank_tuple)
 
-    top_pan = pan_sorted[:4]
-    rem_pan = pan_sorted[4:]
-    top_cms = cms_sorted[:6]
-    tail_cms = cms_sorted[6:]
+    top_pan = pan_sorted[:6]
+    rem_pan = pan_sorted[6:]
+    top_cms = cms_sorted[:8]
+    tail_cms = cms_sorted[8:]
 
     ordered = (
         douban
@@ -362,7 +535,7 @@ def arrange_sites_smart_order(sites, settings, rules):
     for idx, item in enumerate(ordered):
         sc = dict(item)
         if not is_douban_home_site(sc):
-            sc["quickSearch"] = 1 if idx < qs_top_n else 0
+            sc["quickSearch"] = 1 if idx <= qs_top_n else 0
         final_ordered.append(sc)
     return final_ordered
 
@@ -423,7 +596,7 @@ def _probe_pan_ext_page(ext_url, timeout=3.5):
         return False
 
 
-def rank_pan_spider_sites(pan_sites, verify_ext_top_n=10):
+def rank_pan_spider_sites(pan_sites, verify_ext_top_n=25):
     def check_pan(idx_site):
         idx, site = idx_site
         s = dict(site)
@@ -510,11 +683,6 @@ def _normalize_parse_entry(p):
 
 
 def _is_real_parse_response(p_type, body_text):
-    """
-    真实播放解析校验（防失效占位视频与广告劫持）：
-    - type=1（JSON 解析）：必须能解析为 JSON 且包含有效的视频播放链接（非 404/error 占位链）
-    - type=0 / 2（Web 嗅探解析）：必须返回正常 HTML 页面（非空白或 404/防火墙/广告拦截页）
-    """
     if not body_text:
         return False
     txt = body_text.strip()
@@ -593,7 +761,7 @@ def filter_and_sort_parses(parses):
 
 
 def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", version_tag=""):
-    """生成精简版 tvbox_lite.json（豆瓣置顶 + 分片测速筛选 + 过滤成人/敏感站点）"""
+    """生成精简版 tvbox_lite.json（共用自建聚搜首页 + 复用真实分片测速 + 过滤成人/敏感站点）"""
     ed = settings.get("editions", {})
     pan_kws = settings.get("pinned", {}).get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
@@ -605,10 +773,10 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
     ]
 
     max_src_lat = int(ed.get("lite_max_source_latency", 1200))
-    max_pan = int(ed.get("lite_max_pan_sites", 25))
-    max_extra = int(ed.get("lite_max_extra_spider_sites", 25))
+    max_pan = int(ed.get("lite_max_pan_sites", 18))
+    max_extra = int(ed.get("lite_max_extra_spider_sites", 16))
     max_cms_lat = int(ed.get("lite_max_cms_latency", 650))
-    max_cms = int(ed.get("lite_max_cms_sites", 18))
+    max_cms = int(ed.get("lite_max_cms_sites", 16))
 
     pan_list = sorted(
         [
@@ -618,6 +786,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
         ],
         key=lambda x: (
             0 if "_src_id" not in x else 1,
+            not str(x.get("jar", "")).startswith("./jars/"),
             not x.get("_is_priority", False),
             int(x.get("_src_latency", 500) or 500),
         ),
@@ -664,21 +833,29 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
             break
     fast_cms = fast_cms or cms_list[: min(12, len(cms_list))]
 
-    probed_cms = speedtest_cms_segments(
-        fast_cms,
-        top_n=int(ed.get("lite_cms_speedtest_top_n", 12)),
-        workers=16,
-    )
-    min_spd = float(ed.get("lite_min_seg_speed_kbs", 150))
+    need_probe = [s for s in fast_cms if "_seg_speed_kbs" not in s]
+    already_probed = [s for s in fast_cms if "_seg_speed_kbs" in s]
+    if need_probe:
+        newly_probed = speedtest_cms_segments(
+            need_probe,
+            top_n=int(ed.get("lite_cms_speedtest_top_n", 14)),
+            workers=16,
+        )
+        probed_cms = already_probed + newly_probed
+    else:
+        probed_cms = already_probed
+
+    min_spd = float(ed.get("lite_min_seg_speed_kbs", 180))
     speed_passed_cms = [
         s for s in probed_cms if float(s.get("_seg_speed_kbs", 0) or 0) >= min_spd
     ]
     final_cms = speed_passed_cms if len(speed_passed_cms) >= 5 else probed_cms
 
     ordered_sites = arrange_sites_smart_order(
-        [build_douban_site()] + fast_other + final_cms + fast_pan,
+        [build_douban_site(settings=settings, version_tag=version_tag)] + fast_other + final_cms + fast_pan,
         settings,
         rules,
+        version_tag=version_tag,
     )
 
     return ensure_standard_refs(
@@ -704,8 +881,8 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
     ed = settings.get("editions", {})
     pan_kws = settings.get("pinned", {}).get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
-    pan_qs_top = int(ed.get("pan_quick_search_top_n", 12))
-    pan_max = int(ed.get("pan_edition_max_sites", 80))
+    pan_qs_top = int(ed.get("pan_quick_search_top_n", 20))
+    pan_max = int(ed.get("pan_edition_max_sites", 60))
     sites = full_tv_with_meta.get("sites", [])
     pan_list = sorted(
         [
@@ -731,7 +908,9 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
             "spider": "./custom_spider.jar",
             "wallpaper": full_tv_with_meta.get("wallpaper", "https://eees.cc"),
             "lives": full_tv_with_meta.get("lives", []),
-            "sites": strip_internal_meta([build_douban_site()] + graded),
+            "sites": strip_internal_meta(
+                [build_douban_site(settings=settings, version_tag=version_tag)] + graded
+            ),
             "parses": full_tv_with_meta.get("parses", [])[:8],
             "flags": full_tv_with_meta.get("flags", []),
             "ijk": full_tv_with_meta.get("ijk", []),
@@ -750,7 +929,13 @@ def build_absolute_fallback_config(
     abs_sites = []
     for s in base_tv.get("sites", []):
         item = dict(s)
-        if str(item.get("jar", "")).startswith("./"):
+        if is_douban_home_site(item):
+            item = build_douban_site(
+                settings=settings,
+                abs_base_prefix=clean_base,
+                version_tag=version_tag,
+            )
+        elif str(item.get("jar", "")).startswith("./"):
             item["jar"] = f"{clean_base}/{item['jar'][2:]}"
         abs_sites.append(item)
     return ensure_standard_refs(
@@ -783,10 +968,6 @@ def _is_dead_proxy_prefix(prefix, dead_hosts):
 
 
 def _discover_external_gh_proxies(discovery_pages, cf_domains, dead_hosts=()):
-    """
-    外部代理猎手：自动从 discovery_pages 与内置监控页中提取新的 GitHub 加速前缀
-    （自动排除仓库自身的 CF 自定义域名、dead_proxy_hosts 与 raw/github 主域名）
-    """
     excluded_hosts = {
         "github.com",
         "raw.githubusercontent.com",
@@ -1019,6 +1200,7 @@ def write_actions_summary(
     registry,
     alerts,
     prev_counts=None,
+    home_cnt=0,
 ):
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not summary_path:
@@ -1043,9 +1225,10 @@ def write_actions_summary(
         md = (
             f"### 📺 TVBox 自动更新健康简报 ({tag})\n\n"
             f"| 指标 | 数值 |\n| :--- | :--- |\n"
+            f"| 统一聚搜首页 (`home.json`) | **{home_cnt}** 部精选影视（三端共用，点击片名自动全网聚搜） |\n"
             f"| 全量版 (`tvbox.json`) | **{full_cnt}** 站{_fmt_delta(full_cnt, prev.get('full'))}（含网盘 **{pan_cnt}** 站{_fmt_delta(pan_cnt, prev.get('pan_in_full'))}） |\n"
-            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（豆瓣置顶 + 分片测速 + 过滤成人/敏感站点） |\n"
-            f"| 网盘专版 (`tvbox_pan.json`) | **{pan_only_cnt}** 站{_fmt_delta(pan_only_cnt, prev.get('pan_only'))}（豆瓣置顶） |\n"
+            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（统一首页 + 真分片测速 + 纯净过滤） |\n"
+            f"| 网盘专版 (`tvbox_pan.json`) | **{pan_only_cnt}** 站{_fmt_delta(pan_only_cnt, prev.get('pan_only'))}（统一首页 + 高并发网盘聚搜） |\n"
             f"| 精选直播 (`tvbox_live.txt`) | **{live_cnt}** 条{_fmt_delta(live_cnt, prev.get('live'))} |\n"
             f"| JAR 本地镜像 | **{jar_stats[2]}** 个（总存活 {jar_stats[0]}，剔除死链 {jar_stats[1]}） |\n"
             f"| 多仓入口 (`dc.json`) | **{dc_cnt}** 条 |\n"
