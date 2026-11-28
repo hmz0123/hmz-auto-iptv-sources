@@ -17,6 +17,7 @@ from core.builder import (
     build_pan_only_config,
     ensure_standard_refs,
     filter_and_sort_parses,
+    is_douban_home_site,
     rank_pan_spider_sites,
     strip_internal_meta,
     write_actions_summary,
@@ -136,7 +137,6 @@ SPECIAL_SITE_KEYWORDS = (
     "磁力",
 )
 
-# 黑名单域名与上游垃圾关键词（注意：显式保护自建“祝您观影愉快”豆瓣首页不被误杀）
 BLACKLIST_DOMAINS = (
     "agit.ai",
     "www.agit.ai",
@@ -194,23 +194,9 @@ def _ensure_raw_branch_url(url, repo_path, branch="main"):
     return url
 
 
-def _is_protected_douban_home(site):
-    """保护自建豆瓣推荐首页（如 '祝您观影愉快'），防止关键词黑名单误杀"""
-    if not isinstance(site, dict):
-        return False
-    key_str = str(site.get("key", "")).strip().lower()
-    name_str = str(site.get("name", "")).strip()
-    api_str = str(site.get("api", "")).strip().lower()
-    if "祝您观影愉快" in name_str:
-        return True
-    if key_str in ("douban", "豆瓣") and ("douban" in api_str or "祝您观影愉快" in name_str):
-        return True
-    return False
-
-
 def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
     """
-    1. 黑名单域名/关键词过滤（含自建 '祝您观影愉快' 豆瓣首页白名单保护）
+    1. 黑名单域名/关键词过滤（含自建豆瓣推荐首页白名单保护）
     2. 精简版（mode='lite'）额外剔除裸连私有 IP:端口源并收敛冗余玩偶系源
     """
     if not isinstance(sites, list):
@@ -230,7 +216,7 @@ def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
     for s in sites:
         if not isinstance(s, dict):
             continue
-        if _is_protected_douban_home(s):
+        if is_douban_home_site(s):
             filtered.append(s)
             continue
 
@@ -300,13 +286,11 @@ def _normalize_cms_domain(api_url):
     if not host:
         return raw.lower()
 
-    # 剥离常见采集站子域前缀
     host = re.sub(
         r"^(?:www|m|api|cj|caiji|collect|cms|vod|vip|json|xml|v\d+)[.-]+",
         "",
         host,
     )
-    # 常见双后缀/多级后缀归一化（如 ffzyapi.com / ffzy.tv -> ffzy）
     host = re.sub(
         r"(?:zyapi|api|caiji|采集|资源|影视|vod)\.(?:com|net|org|tv|cc|me|xyz|top|live|vip|cn)$",
         "",
@@ -330,18 +314,14 @@ def _dedup_cms_sites_normalized(sites, strict_host_only=False):
         return sites
 
     best_by_norm = {}
-    passthrough = []
-
     for idx, s in enumerate(sites):
-        if not isinstance(s, dict) or s.get("type") != 1 or _is_protected_douban_home(s):
-            passthrough.append((idx, s))
+        if not isinstance(s, dict) or s.get("type") != 1 or is_douban_home_site(s):
             continue
 
         norm_key = _normalize_cms_domain(s.get("api", ""))
         if strict_host_only and "::" in norm_key:
             norm_key = norm_key.split("::", 1)[0]
         if not norm_key:
-            passthrough.append((idx, s))
             continue
 
         lat = _extract_site_latency_ms(s)
@@ -352,10 +332,10 @@ def _dedup_cms_sites_normalized(sites, strict_host_only=False):
         if prev is None or score < prev[0]:
             best_by_norm[norm_key] = (score, idx, s)
 
-    kept_cms = {idx: item[2] for item in best_by_norm.values()}
+    kept_cms = {item[1]: item[2] for item in best_by_norm.values()}
     result = []
     for idx, s in enumerate(sites):
-        if isinstance(s, dict) and s.get("type") == 1 and not _is_protected_douban_home(s):
+        if isinstance(s, dict) and s.get("type") == 1 and not is_douban_home_site(s):
             if idx in kept_cms:
                 result.append(kept_cms[idx])
         else:
@@ -386,13 +366,13 @@ def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branc
     if not s or not s.startswith("http"):
         return val
 
-    # 跳过已使用加速代理的链接
     if proxy_prefix and s.startswith(proxy_prefix):
         return s
     known_proxies = (
         "https://ghfast.top/",
         "https://ghproxy.net/",
-        "https://mirror.ghproxy.com/",
+        "https://gh-proxy.com/",
+        "https://cdn.gh-proxy.org/",
         "https://gh.api.99988866.xyz/",
     )
     if any(s.startswith(kp) for kp in known_proxies) and "raw.githubusercontent.com" in s:
@@ -403,10 +383,8 @@ def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branc
     if "raw.githubusercontent.com/" in s:
         if repo_owner_path:
             s = _ensure_raw_branch_url(s, repo_owner_path, repo_branch)
-        # 若原本是 https://raw.githubusercontent.com/...，直接拼上代理前缀
-        if s.startswith("https://raw.githubusercontent.com/") or s.startswith("http://raw.githubusercontent.com/"):
+        if s.startswith(("https://raw.githubusercontent.com/", "http://raw.githubusercontent.com/")):
             return f"{proxy_prefix}{s}"
-        # 若是其他变体，提取 raw.githubusercontent.com/... 之后拼接
         idx = s.find("raw.githubusercontent.com/")
         if idx != -1:
             return f"{proxy_prefix}https://{s[idx:]}"
@@ -418,7 +396,7 @@ def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branc
 
 
 def _apply_preferred_github_proxy(config_obj, proxy_prefix, repo_owner_path="", repo_branch="main"):
-    """递归遍历配置中的 sites / parses / lives，统一为 GitHub 链接加上优选代理"""
+    """递归遍历配置中的 sites / parses，统一为 GitHub 链接加上优选代理"""
     if not isinstance(config_obj, dict) or not proxy_prefix:
         return config_obj
 
@@ -689,36 +667,18 @@ def _extract_site_latency_ms(site):
 
 def _enrich_top_cms_categories_and_filters(sites, top_n=25):
     """
-    仅对排名前 top_n 的标准 CMS(type=1) 优质直连站探测真实一级分类 ID，
-    收敛主分类为【电影/电视剧/综艺/动漫/短剧】并注入标准四维筛选(类型/地区/年份/排序)。
-    探测失败或非标准站点保持原样，避免串台或空列表。
+    复用 test_and_dedup_cms 探活阶段缓存的 _raw_classes 原始分类列表，
+    为前 top_n 个标准 CMS(type=1) 站点零网络请求映射一级分类与四维筛选。
     """
-    targets = [
-        s
-        for s in sites
-        if s.get("type") == 1
-        and str(s.get("api", "")).startswith("http")
-        and "douban" not in str(s.get("key", "")).lower()
-    ][:top_n]
-    if not targets:
-        return
-
-    def _probe_cms_cat(site):
-        api_u = str(site.get("api", "")).strip()
-        sep = "&" if "?" in api_u else "?"
-        try:
-            req = urllib.request.Request(f"{api_u}{sep}ac=list", headers=HEADERS)
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                if resp.status != 200:
-                    return None
-                raw_text = resp.read(262144).decode("utf-8", errors="ignore")
-                data = json.loads(raw_text)
-        except Exception:
-            return None
-
-        raw_classes = data.get("class")
+    applied = 0
+    for s in sites:
+        if applied >= top_n:
+            break
+        if s.get("type") != 1 or is_douban_home_site(s):
+            continue
+        raw_classes = s.get("_raw_classes")
         if not isinstance(raw_classes, list) or not raw_classes:
-            return None
+            continue
 
         matched_cats = []
         matched_ids = []
@@ -739,56 +699,43 @@ def _enrich_top_cms_categories_and_filters(sites, top_n=25):
                     used_targets.add(target_cat)
                     break
 
-        if len(matched_cats) < 2:
-            return None
-
-        filters_obj = {
-            tid: json.loads(json.dumps(STANDARD_CMS_FILTERS, ensure_ascii=False))
-            for tid in matched_ids
-        }
-        return (site.get("key"), matched_cats, filters_obj)
-
-    enriched_map = {}
-    for res in run_parallel(_probe_cms_cat, targets, workers=8):
-        if res:
-            k, cats, flt = res
-            enriched_map[k] = (cats, flt)
-
-    for s in sites:
-        k = s.get("key")
-        if k in enriched_map:
-            cats, flt = enriched_map[k]
-            s["categories"] = cats
-            s["_categories"] = cats
-            s["filters"] = flt
+        if len(matched_cats) >= 2:
+            filters_obj = {
+                tid: json.loads(json.dumps(STANDARD_CMS_FILTERS, ensure_ascii=False))
+                for tid in matched_ids
+            }
+            s["categories"] = matched_cats
+            s["_categories"] = matched_cats
+            s["filters"] = filters_obj
             s["filterable"] = 1
+            applied += 1
 
 
-def _rebalance_tv_site_tiers(sites, pan_kws, invalid_kws, enrich_top_n=25):
+def _rebalance_tv_site_tiers(sites, settings, pan_kws, invalid_kws, enrich_top_n=25):
     """
-    电视端黄金梯队重排：
-      T1: 豆瓣 / 首页推荐置顶
-      T2: 优质快速直连站（按延迟/速度与健康分综合排序，方便遥控器秒开）
-      T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌等，紧接直连站之后方便看4K原盘）
-      T4: 普通存活直连站（全量兜底）
+    电视端黄金梯队重排 + 统一聚搜(quickSearch)配额分配：
+      T1: 唯一自建豆瓣推荐首页置顶
+      T2: 优质快速直连站（按延迟/速度与健康分综合排序）
+      T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌等，紧接直连站方便看4K原盘）
+      T4: 普通存活直连站
       T5: 动漫 / 短剧 / 体育 / 听书等垂直专项站（放列表尾部避免干扰日常选片）
-    同时为前排优质 CMS 站点注入标准分类与四维筛选。
+    重排后统一为前 quick_search_top_n 个站点分配 quickSearch=1，避免顺序与聚搜错位。
     """
     if not isinstance(sites, list) or not sites:
         return sites
 
+    qs_top_n = int(settings.get("pinned", {}).get("quick_search_top_n", 12))
     indexed = list(enumerate(sites))
 
     def _tier_sort_key(pair):
         idx, s = pair
-        key_str = str(s.get("key", "")).lower()
         name_str = str(s.get("name", ""))
         lat = _extract_site_latency_ms(s)
         health = float(s.get("_health_score") or s.get("health_score") or 60.0)
         is_pan = is_pan_site(s, pan_kws, invalid_kws)
         is_special = any(kw in name_str for kw in SPECIAL_SITE_KEYWORDS)
 
-        if _is_protected_douban_home(s) or "douban" in key_str or "豆瓣" in name_str:
+        if is_douban_home_site(s):
             tier = 1
         elif is_pan:
             tier = 3
@@ -803,6 +750,10 @@ def _rebalance_tv_site_tiers(sites, pan_kws, invalid_kws, enrich_top_n=25):
 
     reordered = [s for _, s in sorted(indexed, key=_tier_sort_key)]
     _enrich_top_cms_categories_and_filters(reordered, top_n=enrich_top_n)
+
+    for idx, s in enumerate(reordered):
+        if not is_douban_home_site(s):
+            s["quickSearch"] = 1 if idx < qs_top_n else 0
     return reordered
 
 
@@ -915,6 +866,7 @@ def main():
                 "_latency": i.get("latency", 888),
                 "_health_score": i.get("health_score", 60),
                 "_categories": i.get("categories", []),
+                "_raw_classes": i.get("_raw_classes", []),
             }
             for i in val_cms
         ]
@@ -922,6 +874,8 @@ def main():
         seen_keys, seen_sigs, base_sites = set(), set(), []
 
         def reg_site(s, allow_rename=True):
+            if is_douban_home_site(s) and s.get("key") != "douban_rank":
+                return False
             k = str(s.get("key", "")).strip()
             ext_sig = (
                 re.sub(r"^https?://", "", str(s.get("ext", "")).strip().lower())
@@ -975,6 +929,7 @@ def main():
         merged = arrange_sites_smart_order(merged_raw, settings, rules)
         merged = _rebalance_tv_site_tiers(
             merged,
+            settings,
             pan_kws,
             invalid_kws,
             enrich_top_n=int(th.get("enrich_cms_filters_top_n", 25)),
@@ -1030,6 +985,7 @@ def main():
             lite_tv["sites"] = strip_internal_meta(
                 _rebalance_tv_site_tiers(
                     lite_sites,
+                    settings,
                     pan_kws,
                     invalid_kws,
                     enrich_top_n=int(th.get("enrich_cms_filters_top_n", 25)),
