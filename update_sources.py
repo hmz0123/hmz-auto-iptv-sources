@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+import html
 import json
 import os
 import re
@@ -169,11 +170,30 @@ LIVE_GENRE_ALIAS_MAP = {
     "体育": "体育频道",
     "央视频道": "CCTV央视频道",
     "央视": "CCTV央视频道",
+    "中央频道": "CCTV央视频道",
     "卫视频道": "地方卫视频道",
     "卫视": "地方卫视频道",
+    "地方卫视": "地方卫视频道",
+    "各省卫视": "地方卫视频道",
     "港澳台频道": "港澳台",
     "港澳台直播": "港澳台",
+    "春晚": "历年春晚",
+    "春晚频道": "历年春晚",
+    "4K": "CCTV央视频道",
+    "4k": "CCTV央视频道",
+    "4K频道": "CCTV央视频道",
+    "4k频道": "CCTV央视频道",
 }
+
+LIVE_JUNK_CHANNEL_EXACT = {
+    "支持作者",
+    "公众号",
+    "关注公众号",
+}
+
+LIVE_JUNK_CHANNEL_SUBSTRINGS = (
+    "Kunnamkulam",
+)
 
 ALLOWED_LIVE_SCHEMES = (
     "http",
@@ -193,40 +213,51 @@ def _normalize_live_genre(raw_genre):
     cleaned = re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_/&]+", "", str(raw_genre or "")).strip()
     if cleaned in LIVE_GENRE_ALIAS_MAP:
         return LIVE_GENRE_ALIAS_MAP[cleaned]
+    if cleaned.lower() in LIVE_GENRE_ALIAS_MAP:
+        return LIVE_GENRE_ALIAS_MAP[cleaned.lower()]
     return cleaned if cleaned else "综合频道"
 
 
 def _sanitize_live_stream_url(raw_url):
-    """清洗直播流地址尾部的引号、字面量转义符（\\r/\\n）及非法协议头"""
+    """清洗直播流地址尾部的引号、HTML实体、字面量转义符、行内#多源及水印参数"""
     if not raw_url:
         return ""
     url = str(raw_url).strip()
-    # 清除文本中直接残留的字面量转义符（如 \r\n）
+
+    # 1. 解码 HTML 实体（如 &amp; -> &）并剔除残留的 &quot; / &quot
+    url = html.unescape(url)
+    url = re.sub(r"&quot;?", "", url, flags=re.IGNORECASE)
+
+    # 2. 清除文本中直接残留的字面量转义符（如 \r\n）及首尾残留引号/控制字符
     url = url.replace("\\r", "").replace("\\n", "").replace("\\t", "")
-    # 剥离首尾残留引号、逗号、分号及不可见控制字符
     url = url.strip("\"'`,; \t\r\n\x00-\x1f\x7f")
     if not url:
         return ""
 
-    # 兼容 TVBox 多源井号拼接格式（url1#url2）
+    # 3. 兼容并清理行内 # 拼接的冗余多源后缀（保留第一条合法流地址）
     parts = [p.strip("\"'`,; \t\r\n\x00-\x1f\x7f") for p in url.split("#") if p.strip()]
-    valid_parts = []
     for part in parts:
+        # 剔除常见的公众号推广尾部参数
+        part = re.sub(r"\?%E5%85%B3%E6%B3%A8%E5%BE%AE.*$", "", part)
+        part = re.sub(r"[?&]zzhed\??$", "", part, flags=re.IGNORECASE)
+        part = part.rstrip("?")
+        if any(ch in part for ch in ('"', "'", "<", ">", "\r", "\n")):
+            continue
         try:
             parsed = urlparse(part)
             if parsed.scheme.lower() in ALLOWED_LIVE_SCHEMES and parsed.netloc:
-                valid_parts.append(part)
+                return part
         except Exception:
             continue
-    return "#".join(valid_parts)
+    return ""
 
 
 def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
     """
     对生成的 tvbox_live.txt 执行后置标准化清洗：
-      1. 合并带 Emoji 与不带 Emoji 的重复 #genre# 分类（如 🏀体育频道 与 体育频道）
-      2. 净化频道 URL 尾部的多余双引号与 \\r\\n 脏字符
-      3. 同分组内按 (频道名, 净化后URL) 精确去重
+      1. 合并带 Emoji 与不带 Emoji 的重复 #genre# 分类（及春晚、4K测试等冗余分组）
+      2. 净化频道 URL 尾部的多余双引号、HTML实体、行内#多源拼接与 \\r\\n 脏字符
+      3. 过滤推广/广告杂项频道，并在同分组内按 (频道名, 净化后URL) 精确去重
     """
     if not os.path.exists(filepath):
         return fallback_count
@@ -265,8 +296,15 @@ def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
             seen_first_genre = True
             ch_name, raw_u = stripped.split(",", 1)
             ch_name = ch_name.strip().strip("\"'")
+            if (
+                not ch_name
+                or ch_name in LIVE_JUNK_CHANNEL_EXACT
+                or any(sub in ch_name for sub in LIVE_JUNK_CHANNEL_SUBSTRINGS)
+            ):
+                continue
+
             clean_u = _sanitize_live_stream_url(raw_u)
-            if not ch_name or not clean_u:
+            if not clean_u:
                 continue
 
             grouped_channels.setdefault(current_genre, [])
