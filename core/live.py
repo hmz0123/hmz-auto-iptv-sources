@@ -102,26 +102,37 @@ def _probe_m3u8_slice_speed(m3u8_text: str, m3u8_url: str, timeout: int = 3) -> 
     if not lines:
         return -1.0
     sample_uri = urllib.parse.urljoin(idn_encode(m3u8_url), lines[-1])
+    if ".m3u8" in sample_uri.lower():
+        try:
+            sub_txt = fetch_url_text(sample_uri, timeout=timeout, prefer_okhttp=True)
+            sub_lines = [ln.strip() for ln in sub_txt.splitlines() if ln.strip() and not ln.strip().startswith("#")]
+            if not sub_lines:
+                return -1.0
+            sample_uri = urllib.parse.urljoin(idn_encode(sample_uri), sub_lines[-1])
+        except Exception:
+            return -1.0
+
     t0 = time.time()
     try:
         req = urllib.request.Request(sample_uri, headers={"User-Agent": "okhttp/3.15"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status not in (200, 206):
                 return -1.0
-            chunk = resp.read(128 * 1024)
+            chunk = resp.read(262144)
             elapsed = max(0.02, time.time() - t0)
-            return round((len(chunk) / 1024.0) / elapsed, 1) if len(chunk) >= 1024 else -1.0
+            return round((len(chunk) / 1024.0) / elapsed, 1) if len(chunk) >= 4096 else -1.0
     except Exception:
         return -1.0
 
 
 def process_live_sources_and_build(registry, new_live_urls, tag, settings):
-    """并发抓取、测速直播源并生成 tvbox_live.txt"""
+    """并发抓取、真实切片测速直播源并生成 tvbox_live.txt"""
     th = settings.get("thresholds", {})
     req_timeout = int(th.get("stream_timeout", th.get("live_timeout", th.get("timeout", 6))))
-    min_slice_kbs = float(th.get("min_live_slice_speed_kbs", 120))
+    min_slice_kbs = float(th.get("min_live_slice_speed_kbs", 220))
+    drop_slow = bool(th.get("drop_slow_live_streams", True))
     min_valid_ch = int(th.get("min_valid_live_channels", 20))
-    max_per_ch = int(th.get("max_streams_per_channel", 6))
+    max_per_ch = int(th.get("max_streams_per_channel", 5))
     max_live_total = int(th.get("max_live_channels", 1500))
     max_workers = int(th.get("max_workers", 20))
     max_suspend = int(settings.get("registry", {}).get("max_seed_suspend_streak", 4))
@@ -185,17 +196,29 @@ def process_live_sources_and_build(registry, new_live_urls, tag, settings):
             try:
                 req = urllib.request.Request(url, headers={"User-Agent": "okhttp/3.15"})
                 with urllib.request.urlopen(req, timeout=req_timeout) as resp:
-                    chunk = resp.read(8192)
+                    chunk = resp.read(16384)
                     if resp.status in (200, 206) and _is_valid_stream_chunk(chunk, resp.headers.get("Content-Type", "")):
                         lat = round((time.time() - t0) * 1000)
                         penalty, slice_kbs = 0, -1.0
                         if b"#extm3u" in chunk.lower():
                             slice_kbs = _probe_m3u8_slice_speed(chunk.decode("utf-8", errors="ignore"), url, timeout=3)
-                            if slice_kbs > 0 and is_hd and slice_kbs < min_slice_kbs:
-                                penalty += 260
+                            if slice_kbs <= 0:
+                                return None
+                            required_spd = min_slice_kbs if is_hd else max(120.0, min_slice_kbs * 0.65)
+                            if slice_kbs < required_spd:
+                                if drop_slow:
+                                    return None
+                                penalty += 320
+                        else:
+                            direct_kbs = round((len(chunk) / 1024.0) / max(0.02, time.time() - t0), 1)
+                            slice_kbs = direct_kbs
+                            if drop_slow and direct_kbs < 100.0:
+                                return None
+
+                        speed_bonus = min(140, int(slice_kbs / 8.0)) if slice_kbs > 0 else 0
                         channel["latency"] = lat
                         channel["slice_kbs"] = slice_kbs
-                        channel["score"] = max(1, lat - _live_quality_bonus(channel) + penalty)
+                        channel["score"] = max(1, lat - _live_quality_bonus(channel) - speed_bonus + penalty)
                         return channel
             except Exception:
                 if attempt == 0:
