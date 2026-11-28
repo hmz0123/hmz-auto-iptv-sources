@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-28 21:17:22 北京时间",
+  "updated_at": "2026-11-28 22:27:21 北京时间",
   "spider": "./custom_spider.jar;md5;15e6a916ed637e3c5dfb75df41d881be",
   "wallpaper": "https://eees.cc",
   "lives": [
@@ -18,7 +18,7 @@
       "key": "hmz_home_hub",
       "name": "🎬今日热播·点击全网搜源",
       "type": 1,
-      "api": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/home.json?v=20261128",
+      "api": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/home.json?v=20261128",
       "searchable": 0,
       "quickSearch": 0,
       "filterable": 0,
@@ -32,11 +32,12 @@
       "searchable": 0,
       "quickSearch": 0,
       "filterable": 1,
-      "changeable": 0
+      "changeable": 0,
+      "jar": "https://ncstatic-file.clewm.net/rsrc/2026/0810/15/d4ef68f275be721a92f218de955a8328.jpg;md5;c96b69de5ace48bcf0e522147364e048"
     },
     {
       "key": "Mogg",
-      "name": "木偶哥哥·4K网盘(90ms)",
+      "name": "木偶哥哥·4K网盘(236ms)",
       "type": 3,
       "api": "csp_Wogg",
       "searchable": 1,
@@ -67,13 +68,47 @@
       "ext": "https://www.libvio.pw/"
     },
     {
+      "key": "Lib",
+      "name": "🌟立播",
+      "type": 3,
+      "api": "csp_Libvio",
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 1,
+      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\"}",
+      "jar": "./jars/6c4ab3a9d232.jar;md5;6c4ab3a9d232164c75534f9060506ee5"
+    },
+    {
+      "key": "玩偶",
+      "name": "👽玩偶哥哥┃4K弹幕",
+      "type": 3,
+      "api": "csp_WoGG",
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 0,
+      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\", \"siteUrl\": \"https://www.wogg.net/\", \"danMu\": \"弹\"}",
+      "jar": "./jars/6c4ab3a9d232.jar;md5;6c4ab3a9d232164c75534f9060506ee5"
+    },
+    {
+      "key": "csp_Netfixtv",
+      "name": "💌┃至臻┃影视",
+      "type": 3,
+      "api": "csp_Netfixtv",
+      "playerType": 2,
+      "filterable": 1,
+      "ext": "",
+      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
+      "quickSearch": 1
+    },
+    {
       "key": "csp_Duopan",
-      "name": "🖍︎┃蜡笔┃影视",
+      "name": "🖍︎┃蜡笔┃云盘",
       "type": 3,
       "api": "csp_Duopan",
+      "playerType": 2,
       "filterable": 1,
-      "ext": "{\"site_urls\": [\"http://xiaocge.fun\", \"http://feimo.fun\", \"http://www.labi88.sbs\", \"http://fmao.site\", \"http://fmao.shop\", \"http://xiaocgege.shop\", \"http://www.xiaocgege.shop\"], \"threadinfo\": {\"chunksize\": 512, \"threads\": 16}, \"url_key\": \"Duopan2\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "./jars/3f9b9cac793a.jar;md5;3f9b9cac793a3e9b818131c8a7208800",
+      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
+      "ext": "https://duopan.fun/",
       "quickSearch": 1
     },
     {
@@ -84,97 +119,31 @@
       "searchable": 1,
       "changeable": 0,
       "ext": "{\"token\": \"影視天下第一\", \"filter\": \"https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/wogg.json\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "./jars/15e6a916ed63.jar;md5;15e6a916ed637e3c5dfb75df41d881be",
+      "jar": "https://gh-proxy.com/github.com/FongMi/CatVodSpider/raw/main/jar/custom_spider.jar",
       "quickSearch": 1
     },
     {
-      "key": "AiNewLibvio",
-      "name": "💓立播┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewLibvioGuard",
+      "key": "MV_vod",
+      "name": "🎶明星┃MV",
+      "type": 1,
+      "api": "https://mv.wogg.link/mv/vod",
+      "style": {
+        "type": "oval"
+      },
       "searchable": 1,
       "quickSearch": 1,
       "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
       "ext": ""
     },
     {
-      "key": "玩偶",
-      "name": "💓‍玩偶┃4K💓‍",
+      "key": "fm_csp_Duopan",
+      "name": "🖍︎┃蜡笔┃影视",
       "type": 3,
-      "api": "csp_AiNewWoggGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "AiNewMuOu",
-      "name": "💓木偶┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewMuOuGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "AiNewLaBi",
-      "name": "💓蜡笔┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewLaBiGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "xm_玩偶",
-      "name": "👽玩偶哥哥┃4K弹幕",
-      "type": 3,
-      "api": "csp_WoGGGuard",
-      "timeout": 30,
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "./jars/4ce29ce27eef.jar;md5;4ce29ce27eeff6a73a230dd92d98ba0c"
-    },
-    {
-      "key": "Lib",
-      "name": "🌟立播",
-      "type": 3,
-      "api": "csp_Libvio",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 1,
-      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\"}",
-      "jar": "https://gh-proxy.org/https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/fan.txt;md5;6c4ab3a9d232164c75534f9060506ee5"
-    },
-    {
-      "key": "fty_玩偶",
-      "name": "👽玩偶哥哥┃4K弹幕",
-      "type": 3,
-      "api": "csp_WoGG",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\", \"siteUrl\": \"https://www.wogg.net/\", \"danMu\": \"弹\"}",
-      "jar": "https://gh-proxy.org/https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/fan.txt;md5;6c4ab3a9d232164c75534f9060506ee5"
-    },
-    {
-      "key": "csp_XYQHikerAL_玩偶哥哥",
-      "name": "📀玩偶哥哥(优)",
-      "type": 3,
-      "api": "csp_XYQHikerAL",
-      "searchable": 1,
-      "quickSearch": 1,
+      "api": "csp_Duopan",
       "filterable": 1,
-      "ext": "https://gh-proxy.org/https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
-      "jar": "https://gh-proxy.org/https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/XYQ.jar;md5;705ba6e23c4384c37a11dd904727520b"
+      "ext": "{\"site_urls\": [\"http://xiaocge.fun\", \"http://feimo.fun\", \"http://www.labi88.sbs\", \"http://fmao.site\", \"http://fmao.shop\", \"http://xiaocgege.shop\", \"http://www.xiaocgege.shop\"], \"threadinfo\": {\"chunksize\": 512, \"threads\": 16}, \"url_key\": \"Duopan2\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
+      "jar": "https://img2.gelonghui.com/library/3f9b9-de4a5d2c-7fea-4d70-8a85-79be6c379621.png;md5;3f9b9cac793a3e9b818131c8a7208800",
+      "quickSearch": 1
     }
   ],
   "parses": [
@@ -229,16 +198,6 @@
       "url": "https://bd.jx.cn/?url="
     },
     {
-      "name": "云解",
-      "type": 0,
-      "url": "https://yparse.ik9.cc/index.php?url=",
-      "ext": {
-        "header": {
-          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
-        }
-      }
-    },
-    {
       "name": "盘古",
       "type": 0,
       "url": "https://www.playm3u8.cn/jiexi.php?url=",
@@ -249,9 +208,19 @@
       }
     },
     {
-      "name": "淘片",
+      "name": "云解",
       "type": 0,
-      "url": "https://jx.yparse.com/index.php?url=",
+      "url": "https://yparse.ik9.cc/index.php?url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
+        }
+      }
+    },
+    {
+      "name": "夜幕",
+      "type": 0,
+      "url": "https://yemu.xyz/?url=",
       "ext": {
         "header": {
           "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
