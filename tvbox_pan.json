@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-28 17:56:08 北京时间",
+  "updated_at": "2026-11-28 18:56:32 北京时间",
   "spider": "./custom_spider.jar;md5;15e6a916ed637e3c5dfb75df41d881be",
   "wallpaper": "https://eees.cc",
   "lives": [
@@ -15,18 +15,18 @@
   ],
   "sites": [
     {
-      "key": "douban_rank",
-      "name": "🎬祝您观影愉快·豆瓣热播",
-      "type": 3,
-      "api": "csp_Douban",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1,
-      "ext": "{\"class\": [{\"type_id\": \"movie\", \"type_name\": \"电影\"}, {\"type_id\": \"tv\", \"type_name\": \"电视剧\"}, {\"type_id\": \"show\", \"type_name\": \"综艺\"}, {\"type_id\": \"anime\", \"type_name\": \"动漫\"}, {\"type_id\": \"top250\", \"type_name\": \"豆瓣Top250\"}, {\"type_id\": \"weekly_movie\", \"type_name\": \"一周口碑电影\"}, {\"type_id\": \"weekly_tv\", \"type_name\": \"全球口碑剧集\"}]}"
+      "key": "hmz_home_hub",
+      "name": "🎬今日热播·点击全网搜源",
+      "type": 1,
+      "api": "https://gh.qsd.onl/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/home.json?v=20261128",
+      "searchable": 0,
+      "quickSearch": 0,
+      "filterable": 0,
+      "changeable": 0
     },
     {
       "key": "Mogg",
-      "name": "木偶哥哥·4K网盘(94ms)",
+      "name": "木偶哥哥·4K网盘(136ms)",
       "type": 3,
       "api": "csp_Wogg",
       "searchable": 1,
@@ -57,93 +57,15 @@
       "ext": "https://www.libvio.pw/"
     },
     {
-      "key": "csp_Netfixtv",
-      "name": "💌┃至臻┃影视",
+      "key": "csp_XYQHikerAL_玩偶哥哥",
+      "name": "📀玩偶哥哥(优)",
       "type": 3,
-      "api": "csp_Netfixtv",
-      "playerType": 2,
+      "api": "csp_XYQHikerAL",
+      "searchable": 1,
+      "quickSearch": 1,
       "filterable": 1,
-      "ext": "",
-      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
-      "quickSearch": 1
-    },
-    {
-      "key": "csp_Duopan",
-      "name": "🖍︎┃蜡笔┃云盘",
-      "type": 3,
-      "api": "csp_Duopan",
-      "playerType": 2,
-      "filterable": 1,
-      "jar": "./jars/888a64f65aab.jar;md5;888a64f65aab54892980ded5c6da9a6e",
-      "ext": "https://duopan.fun/",
-      "quickSearch": 1
-    },
-    {
-      "key": "AiNewLibvio",
-      "name": "💓立播┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewLibvioGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "玩偶",
-      "name": "💓‍玩偶┃4K💓‍",
-      "type": 3,
-      "api": "csp_AiNewWoggGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "AiNewMuOu",
-      "name": "💓木偶┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewMuOuGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "AiNewLaBi",
-      "name": "💓蜡笔┃4K💓",
-      "type": 3,
-      "api": "csp_AiNewLaBiGuard",
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "jar": "./jars/231915407140.jar;md5;231915407140da7d4319728bf4266174",
-      "ext": ""
-    },
-    {
-      "key": "xm_玩偶",
-      "name": "👽玩偶哥哥┃4K弹幕",
-      "type": 3,
-      "api": "csp_WoGGGuard",
-      "timeout": 30,
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "./jars/4ce29ce27eef.jar;md5;4ce29ce27eeff6a73a230dd92d98ba0c"
-    },
-    {
-      "key": "csp_WoGG1",
-      "name": "💖玩偶影视4K-备1",
-      "type": 3,
-      "api": "csp_Wogg",
-      "searchable": 1,
-      "changeable": 0,
-      "ext": "{\"token\": \"影視天下第一\", \"filter\": \"https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/wogg.json\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "https://gh-proxy.com/github.com/FongMi/CatVodSpider/raw/main/jar/custom_spider.jar",
-      "quickSearch": 1
+      "ext": "https://gh.qsd.onl/https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
+      "jar": "./jars/705ba6e23c43.jar;md5;705ba6e23c4384c37a11dd904727520b"
     },
     {
       "key": "Lib",
@@ -157,15 +79,61 @@
       "jar": "https://gh.qsd.onl/https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/fan.txt;md5;6c4ab3a9d232164c75534f9060506ee5"
     },
     {
-      "key": "fty_玩偶",
+      "key": "玩偶",
       "name": "👽玩偶哥哥┃4K弹幕",
       "type": 3,
       "api": "csp_WoGG",
       "searchable": 1,
-      "quickSearch": 0,
+      "quickSearch": 1,
       "changeable": 0,
       "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\", \"siteUrl\": \"https://www.wogg.net/\", \"danMu\": \"弹\"}",
       "jar": "https://gh.qsd.onl/https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/fan.txt;md5;6c4ab3a9d232164c75534f9060506ee5"
+    },
+    {
+      "key": "csp_Netfixtv",
+      "name": "💌┃至臻┃影视",
+      "type": 3,
+      "api": "csp_Netfixtv",
+      "playerType": 2,
+      "filterable": 1,
+      "ext": "",
+      "jar": "https://gh.qsd.onl/https://raw.githubusercontent.com/liu673cn/box/main/libs/jar/Panda.jar",
+      "quickSearch": 1
+    },
+    {
+      "key": "csp_Duopan",
+      "name": "🖍︎┃蜡笔┃云盘",
+      "type": 3,
+      "api": "csp_Duopan",
+      "playerType": 2,
+      "filterable": 1,
+      "jar": "https://gh.qsd.onl/https://raw.githubusercontent.com/liu673cn/box/main/libs/jar/Panda.jar",
+      "ext": "https://duopan.fun/",
+      "quickSearch": 1
+    },
+    {
+      "key": "MV_vod",
+      "name": "🎶明星┃MV",
+      "type": 1,
+      "api": "https://mv.wogg.link/mv/vod",
+      "style": {
+        "type": "oval"
+      },
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 0,
+      "ext": ""
+    },
+    {
+      "key": "csp_WoGG1",
+      "name": "💖玩偶影视4K-备1",
+      "type": 3,
+      "api": "csp_Wogg",
+      "searchable": 1,
+      "changeable": 0,
+      "ext": "{\"token\": \"影視天下第一\", \"filter\": \"https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/wogg.json\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
+      "jar": "https://gh-proxy.com/github.com/FongMi/CatVodSpider/raw/main/jar/custom_spider.jar",
+      "quickSearch": 1
     }
   ],
   "parses": [
@@ -175,14 +143,14 @@
       "url": "https://okjx.cc/?url="
     },
     {
-      "name": "CK",
-      "type": 0,
-      "url": "https://www.ckplayer.vip/jiexi/?url="
-    },
-    {
       "name": "看看",
       "type": 0,
       "url": "https://jx.m3u8.pw/?url="
+    },
+    {
+      "name": "CK",
+      "type": 0,
+      "url": "https://www.ckplayer.vip/jiexi/?url="
     },
     {
       "name": "免费分享",
@@ -240,9 +208,14 @@
       }
     },
     {
-      "name": "ikun",
+      "name": "淘片",
       "type": 0,
-      "url": "https://jx.hls.one/?url="
+      "url": "https://jx.yparse.com/index.php?url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
+        }
+      }
     }
   ],
   "flags": [
