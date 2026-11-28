@@ -1282,13 +1282,10 @@ def main():
         )
 
     proxy_pool_for_abs = lite_px or full_px
-    for idx_abs, (fp, out_fname, label_prefix) in enumerate(
-        zip(
-            proxy_pool_for_abs[:1],
-            ("tvbox_proxy_abs.json",),
-            ("🛡️代理应急主线",),
-        ),
-        1,
+    for fp, out_fname, label_prefix in zip(
+        proxy_pool_for_abs[:2],
+        ("tvbox_proxy_abs.json", "tvbox_proxy_abs2.json"),
+        ("🛡️代理应急主线", "🛡️代理应急备线"),
     ):
         prefix = fp["prefix"] if fp["prefix"].endswith("/") else f"{fp['prefix']}/"
         raw_base = f"{prefix}{GH_RAW}/{repo_owner_path}/{repo_branch}"
