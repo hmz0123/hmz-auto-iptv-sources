@@ -46,6 +46,95 @@ from core.vod import (
 
 CST_TZ = timezone(timedelta(hours=8))
 
+STANDARD_CMS_FILTERS = [
+    {
+        "key": "class",
+        "name": "类型",
+        "value": [
+            {"n": "全部", "v": ""},
+            {"n": "剧情", "v": "剧情"},
+            {"n": "喜剧", "v": "喜剧"},
+            {"n": "动作", "v": "动作"},
+            {"n": "爱情", "v": "爱情"},
+            {"n": "科幻", "v": "科幻"},
+            {"n": "悬疑", "v": "悬疑"},
+            {"n": "惊悚", "v": "惊悚"},
+            {"n": "犯罪", "v": "犯罪"},
+            {"n": "奇幻", "v": "奇幻"},
+            {"n": "战争", "v": "战争"},
+            {"n": "动画", "v": "动画"},
+            {"n": "纪录片", "v": "纪录片"},
+        ],
+    },
+    {
+        "key": "area",
+        "name": "地区",
+        "value": [
+            {"n": "全部", "v": ""},
+            {"n": "大陆", "v": "大陆"},
+            {"n": "香港", "v": "香港"},
+            {"n": "台湾", "v": "台湾"},
+            {"n": "美国", "v": "美国"},
+            {"n": "韩国", "v": "韩国"},
+            {"n": "日本", "v": "日本"},
+            {"n": "英国", "v": "英国"},
+            {"n": "泰国", "v": "泰国"},
+            {"n": "印度", "v": "印度"},
+            {"n": "其他", "v": "其他"},
+        ],
+    },
+    {
+        "key": "year",
+        "name": "年份",
+        "value": [
+            {"n": "全部", "v": ""},
+            {"n": "2026", "v": "2026"},
+            {"n": "2025", "v": "2025"},
+            {"n": "2024", "v": "2024"},
+            {"n": "2023", "v": "2023"},
+            {"n": "2022", "v": "2022"},
+            {"n": "2021", "v": "2021"},
+            {"n": "2020", "v": "2020"},
+            {"n": "2010-2019", "v": "2010-2019"},
+            {"n": "更早", "v": "更早"},
+        ],
+    },
+    {
+        "key": "by",
+        "name": "排序",
+        "value": [
+            {"n": "最新上线", "v": "time"},
+            {"n": "最多播放", "v": "hits"},
+            {"n": "豆瓣高分", "v": "score"},
+        ],
+    },
+]
+
+PRIMARY_CAT_ALIASES = (
+    ("电影", ("电影", "电影片", "大片")),
+    ("电视剧", ("电视剧", "连续剧", "剧集")),
+    ("综艺", ("综艺", "综艺节目", "真人秀")),
+    ("动漫", ("动漫", "动画", "番剧", "少儿")),
+    ("短剧", ("短剧", "爽剧", "微短剧")),
+)
+
+SPECIAL_SITE_KEYWORDS = (
+    "动漫",
+    "番剧",
+    "短剧",
+    "爽剧",
+    "体育",
+    "球赛",
+    "听书",
+    "相声",
+    "小品",
+    "戏曲",
+    "少儿",
+    "纪录",
+    "演唱会",
+    "磁力",
+)
+
 
 def _parse_iso_ts(ts_str):
     if not ts_str:
@@ -307,6 +396,137 @@ def _snapshot_prev_counts(settings, pan_keywords, invalid_keywords):
     return prev
 
 
+def _extract_site_latency_ms(site):
+    """从站点元数据或名称括号中解析响应延迟(ms)"""
+    for k in ("_latency", "_src_latency", "latency"):
+        v = site.get(k)
+        if isinstance(v, (int, float)) and v > 0:
+            return int(v)
+    m = re.search(r"\((\d{1,4})\s*ms\)", str(site.get("name", "")))
+    if m:
+        return int(m.group(1))
+    return 600
+
+
+def _enrich_top_cms_categories_and_filters(sites, top_n=25):
+    """
+    仅对排名前 top_n 的标准 CMS(type=1) 优质直连站探测真实一级分类 ID，
+    收敛主分类为【电影/电视剧/综艺/动漫/短剧】并注入标准四维筛选(类型/地区/年份/排序)。
+    探测失败或非标准站点保持原样，避免串台或空列表。
+    """
+    targets = [
+        s
+        for s in sites
+        if s.get("type") == 1
+        and str(s.get("api", "")).startswith("http")
+        and "douban" not in str(s.get("key", "")).lower()
+    ][:top_n]
+    if not targets:
+        return
+
+    def _probe_cms_cat(site):
+        api_u = str(site.get("api", "")).strip()
+        sep = "&" if "?" in api_u else "?"
+        try:
+            req = urllib.request.Request(f"{api_u}{sep}ac=list", headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status != 200:
+                    return None
+                raw_text = resp.read(262144).decode("utf-8", errors="ignore")
+                data = json.loads(raw_text)
+        except Exception:
+            return None
+
+        raw_classes = data.get("class")
+        if not isinstance(raw_classes, list) or not raw_classes:
+            return None
+
+        matched_cats = []
+        matched_ids = []
+        used_targets = set()
+        for item in raw_classes:
+            if not isinstance(item, dict):
+                continue
+            t_name = str(item.get("type_name", "")).strip()
+            t_id = str(item.get("type_id", "")).strip()
+            if not t_id:
+                continue
+            for target_cat, aliases in PRIMARY_CAT_ALIASES:
+                if target_cat not in used_targets and any(
+                    alias == t_name or alias in t_name for alias in aliases
+                ):
+                    matched_cats.append(target_cat)
+                    matched_ids.append(t_id)
+                    used_targets.add(target_cat)
+                    break
+
+        if len(matched_cats) < 2:
+            return None
+
+        filters_obj = {
+            tid: json.loads(json.dumps(STANDARD_CMS_FILTERS, ensure_ascii=False))
+            for tid in matched_ids
+        }
+        return (site.get("key"), matched_cats, filters_obj)
+
+    enriched_map = {}
+    for res in run_parallel(_probe_cms_cat, targets, workers=8):
+        if res:
+            k, cats, flt = res
+            enriched_map[k] = (cats, flt)
+
+    for s in sites:
+        k = s.get("key")
+        if k in enriched_map:
+            cats, flt = enriched_map[k]
+            s["categories"] = cats
+            s["_categories"] = cats
+            s["filters"] = flt
+            s["filterable"] = 1
+
+
+def _rebalance_tv_site_tiers(sites, pan_kws, invalid_kws, enrich_top_n=25):
+    """
+    电视端黄金梯队重排：
+      T1: 豆瓣 / 首页推荐置顶
+      T2: 优质快速直连站（按延迟/速度与健康分综合排序，方便遥控器秒开）
+      T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌等，紧接直连站之后方便看4K原盘）
+      T4: 普通存活直连站（全量兜底）
+      T5: 动漫 / 短剧 / 体育 / 听书等垂直专项站（放列表尾部避免干扰日常选片）
+    同时为前排优质 CMS 站点注入标准分类与四维筛选。
+    """
+    if not isinstance(sites, list) or not sites:
+        return sites
+
+    indexed = list(enumerate(sites))
+
+    def _tier_sort_key(pair):
+        idx, s = pair
+        key_str = str(s.get("key", "")).lower()
+        name_str = str(s.get("name", ""))
+        lat = _extract_site_latency_ms(s)
+        health = float(s.get("_health_score") or s.get("health_score") or 60.0)
+        is_pan = is_pan_site(s, pan_kws, invalid_kws)
+        is_special = any(kw in name_str for kw in SPECIAL_SITE_KEYWORDS)
+
+        if "douban" in key_str or "豆瓣" in name_str:
+            tier = 1
+        elif is_pan:
+            tier = 3
+        elif is_special:
+            tier = 5
+        elif s.get("type") == 1 or s.get("_is_priority") or lat <= 450:
+            tier = 2
+        else:
+            tier = 4
+
+        return (tier, lat, -health, idx)
+
+    reordered = [s for _, s in sorted(indexed, key=_tier_sort_key)]
+    _enrich_top_cms_categories_and_filters(reordered, top_n=enrich_top_n)
+    return reordered
+
+
 def main():
     settings, seeds, rules = load_configs()
     th = settings.get("thresholds", {})
@@ -413,6 +633,8 @@ def main():
                 "searchable": 1,
                 "quickSearch": 1,
                 "filterable": 1,
+                "_latency": i.get("latency", 888),
+                "_health_score": i.get("health_score", 60),
                 "_categories": i.get("categories", []),
             }
             for i in val_cms
@@ -442,7 +664,9 @@ def main():
 
         if reg_site(douban, allow_rename=False):
             base_sites.append(douban)
-        for s in rank_pan_spider_sites(seeds.get("pan_spider_sites", []), verify_ext_top_n=10) + cms_sites:
+        for s in cms_sites + rank_pan_spider_sites(
+            seeds.get("pan_spider_sites", []), verify_ext_top_n=10
+        ):
             if reg_site(s, allow_rename=True):
                 base_sites.append(s)
 
@@ -466,6 +690,12 @@ def main():
             + [s for s in dedup_ex if is_pan_site(s, pan_kws, invalid_kws)]
         )
         merged = arrange_sites_smart_order(merged_raw, settings, rules)
+        merged = _rebalance_tv_site_tiers(
+            merged,
+            pan_kws,
+            invalid_kws,
+            enrich_top_n=int(th.get("enrich_cms_filters_top_n", 25)),
+        )
 
         pan_cnt = sum(1 for s in merged if is_pan_site(s, pan_kws, invalid_kws))
         if (
@@ -511,6 +741,15 @@ def main():
         lite_tv = build_lite_config(
             final_tv_meta, tag, settings, rules, spider_md5, version_tag=version_tag
         )
+        if isinstance(lite_tv.get("sites"), list):
+            lite_tv["sites"] = strip_internal_meta(
+                _rebalance_tv_site_tiers(
+                    lite_tv["sites"],
+                    pan_kws,
+                    invalid_kws,
+                    enrich_top_n=int(th.get("enrich_cms_filters_top_n", 25)),
+                )
+            )
     else:
         with open("tvbox_lite.json", "r", encoding="utf-8") as f:
             lite_tv = json.load(f)
