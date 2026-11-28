@@ -961,7 +961,7 @@ def _is_recently_healthy_cms(item, now_ts):
 def test_and_dedup_cms(cms_map, settings):
     """
     并发测速 CMS 接口 + 历史健康度（EMA）自适应加权 + 增量快速探活 + 指纹合并镜像站
-    （探活同时缓存 _raw_classes 原始分类列表，免去后续重复 ac=list 请求）
+    （探活同时缓存 _raw_classes 与 _has_valid_hub_content 质量标记，确保第二屏筛选片库不空库）
     """
     th = settings.get("thresholds", {})
     timeout = int(th.get("timeout", 5))
@@ -987,6 +987,7 @@ def test_and_dedup_cms(cms_map, settings):
                     data = parse_json_lenient(stripped)
                     if isinstance(data, dict) and (data.get("list") or data.get("class")):
                         classes = data.get("class") or []
+                        vod_items_list = data.get("list") or []
                         valid_raw_classes = [
                             {
                                 "type_id": str(c.get("type_id", "")).strip(),
@@ -1003,13 +1004,23 @@ def test_and_dedup_cms(cms_map, settings):
                                 dict.fromkeys(list(site.get("categories") or []) + live_cats)
                             )
                         site["_raw_classes"] = valid_raw_classes
+
+                        # 校验是否具备完整分类（>=4个）与实质内容（>=10条且含常规影视大类）
+                        cls_names_blob = " ".join(c["type_name"] for c in valid_raw_classes)
+                        site["_has_valid_hub_content"] = (
+                            isinstance(vod_items_list, list)
+                            and len(vod_items_list) >= 10
+                            and len(valid_raw_classes) >= 4
+                            and any(kw in cls_names_blob for kw in ("电影", "剧", "动漫", "综艺"))
+                        )
+
                         cls_sig = ",".join(
                             f"{c['type_id']}:{c['type_name']}"
                             for c in valid_raw_classes[:15]
                         )
                         titles = "|".join(
                             str(x.get("vod_name", ""))[:16]
-                            for x in (data.get("list") or [])[:5]
+                            for x in vod_items_list[:5]
                             if isinstance(x, dict)
                         )
                         site["latency"] = lat
@@ -1019,6 +1030,7 @@ def test_and_dedup_cms(cms_map, settings):
                         return site
                 elif "<rss" in stripped and "<list" in stripped:
                     site["latency"] = lat
+                    site["_has_valid_hub_content"] = False
                     site["fingerprint"] = hashlib.md5(
                         stripped[:2048].encode("utf-8")
                     ).hexdigest()[:16]
