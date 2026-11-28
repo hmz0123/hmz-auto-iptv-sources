@@ -68,7 +68,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
         if isinstance(s, dict)
         and s.get("type") == 1
         and str(s.get("api", "")).startswith(("http://", "https://"))
-    ][:4]
+    ][:8]
 
     buckets = {cid: [] for cid, _, _ in HOME_CATEGORY_SPECS}
     seen_titles = set()
@@ -92,7 +92,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
 
         fetch_targets = list(cat_id_map.items()) if cat_id_map else [("1", "")]
         for cid, remote_tid in fetch_targets:
-            if len(buckets[cid]) >= 24:
+            if len(buckets[cid]) >= 15:
                 continue
             q_url = f"{base_api}{sep}ac=detail&pg=1" + (f"&t={urllib.parse.quote(remote_tid)}" if remote_tid else "")
             try:
@@ -119,7 +119,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
                             if any(a in type_lbl for a in aliases):
                                 target_cid = c_id
                                 break
-                    if len(buckets[target_cid]) >= 24:
+                    if len(buckets[target_cid]) >= 15:
                         continue
 
                     cat_name = next((cname for c_id, cname, _ in HOME_CATEGORY_SPECS if c_id == target_cid), "热门推荐")
