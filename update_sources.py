@@ -4,6 +4,7 @@ import os
 import re
 import time
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 
 from core.builder import (
@@ -135,6 +136,34 @@ SPECIAL_SITE_KEYWORDS = (
     "磁力",
 )
 
+# 黑名单域名与上游垃圾关键词（注意：显式保护自建“祝您观影愉快”豆瓣首页不被误杀）
+BLACKLIST_DOMAINS = (
+    "agit.ai",
+    "www.agit.ai",
+    "voflix.me",
+    "www.voflix.me",
+    "wogg.xxooo.cf",
+    "rihou.vip",
+)
+
+BLACKLIST_SITE_KEYWORDS = (
+    "永远免费",
+    "live2vod",
+    "yj1211",
+)
+
+LITE_PRIVATE_IP_PORT_RE = re.compile(
+    r"^https?://(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?:/|$)",
+    re.IGNORECASE,
+)
+
+WOGG_LIKE_KEYWORDS = (
+    "玩偶",
+    "wogg",
+    "mogg",
+    "木偶",
+)
+
 
 def _parse_iso_ts(ts_str):
     if not ts_str:
@@ -163,6 +192,256 @@ def _ensure_raw_branch_url(url, repo_path, branch="main"):
     if prefix_marker in url and branch_marker not in url:
         return url.replace(prefix_marker, branch_marker, 1)
     return url
+
+
+def _is_protected_douban_home(site):
+    """保护自建豆瓣推荐首页（如 '祝您观影愉快'），防止关键词黑名单误杀"""
+    if not isinstance(site, dict):
+        return False
+    key_str = str(site.get("key", "")).strip().lower()
+    name_str = str(site.get("name", "")).strip()
+    api_str = str(site.get("api", "")).strip().lower()
+    if "祝您观影愉快" in name_str:
+        return True
+    if key_str in ("douban", "豆瓣") and ("douban" in api_str or "祝您观影愉快" in name_str):
+        return True
+    return False
+
+
+def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
+    """
+    1. 黑名单域名/关键词过滤（含自建 '祝您观影愉快' 豆瓣首页白名单保护）
+    2. 精简版（mode='lite'）额外剔除裸连私有 IP:端口源并收敛冗余玩偶系源
+    """
+    if not isinstance(sites, list):
+        return []
+
+    dead_host_set = {
+        str(h).strip().lower()
+        for h in (tuple(BLACKLIST_DOMAINS) + tuple(extra_dead_hosts or ()))
+        if str(h).strip()
+    }
+    kw_list = [k.lower() for k in BLACKLIST_SITE_KEYWORDS]
+
+    filtered = []
+    wogg_kept = 0
+    max_wogg_in_lite = 2
+
+    for s in sites:
+        if not isinstance(s, dict):
+            continue
+        if _is_protected_douban_home(s):
+            filtered.append(s)
+            continue
+
+        key_str = str(s.get("key", "")).strip().lower()
+        name_str = str(s.get("name", "")).strip()
+        name_lower = name_str.lower()
+        blob = " ".join(
+            [
+                key_str,
+                name_lower,
+                str(s.get("api", "")).lower(),
+                str(s.get("ext", "")).lower(),
+                str(s.get("jar", "")).lower(),
+            ]
+        )
+
+        if any(kw in blob for kw in kw_list):
+            continue
+
+        matched_dead = False
+        for field in ("api", "ext", "jar", "url"):
+            val = str(s.get(field, "")).strip()
+            if not val:
+                continue
+            try:
+                host = (urlparse(val).hostname or "").lower()
+            except Exception:
+                host = ""
+            if host and any(host == dh or host.endswith("." + dh) for dh in dead_host_set):
+                matched_dead = True
+                break
+            if any(dh in val.lower() for dh in dead_host_set):
+                matched_dead = True
+                break
+        if matched_dead:
+            continue
+
+        if mode == "lite":
+            api_u = str(s.get("api", "")).strip()
+            ext_u = str(s.get("ext", "")).strip()
+            if LITE_PRIVATE_IP_PORT_RE.match(api_u) or LITE_PRIVATE_IP_PORT_RE.match(ext_u):
+                continue
+
+            is_wogg_like = any(w in key_str or w in name_lower for w in WOGG_LIKE_KEYWORDS)
+            if is_wogg_like:
+                if wogg_kept >= max_wogg_in_lite:
+                    continue
+                wogg_kept += 1
+
+        filtered.append(s)
+
+    return filtered
+
+
+def _normalize_cms_domain(api_url):
+    """提取 CMS 接口归一化主域名，用于合并同一采集站的 XML/JSON 或多子域重复项"""
+    raw = str(api_url or "").strip()
+    if not raw:
+        return ""
+    try:
+        parsed = urlparse(raw)
+        host = (parsed.hostname or "").lower().strip(".")
+        path = (parsed.path or "").lower()
+    except Exception:
+        return raw.lower()
+
+    if not host:
+        return raw.lower()
+
+    # 剥离常见采集站子域前缀
+    host = re.sub(
+        r"^(?:www|m|api|cj|caiji|collect|cms|vod|vip|json|xml|v\d+)[.-]+",
+        "",
+        host,
+    )
+    # 常见双后缀/多级后缀归一化（如 ffzyapi.com / ffzy.tv -> ffzy）
+    host = re.sub(
+        r"(?:zyapi|api|caiji|采集|资源|影视|vod)\.(?:com|net|org|tv|cc|me|xyz|top|live|vip|cn)$",
+        "",
+        host,
+    )
+    host = re.sub(
+        r"\.(?:com\.cn|net\.cn|org\.cn|com|net|org|tv|cc|me|xyz|top|live|vip|cn|io|gg|sh|la|pro)$",
+        "",
+        host,
+    )
+    path_tag = "xml" if ("xml" in path or "at/xml" in path) else "json"
+    return f"{host or parsed.hostname}::{path_tag}"
+
+
+def _dedup_cms_sites_normalized(sites, strict_host_only=False):
+    """
+    CMS 采集源接口归一化去重：
+    对 type == 1 的标准 CMS 采集站按归一化主域名归并，优先保留延迟最低、健康分最高的条目。
+    """
+    if not isinstance(sites, list) or not sites:
+        return sites
+
+    best_by_norm = {}
+    passthrough = []
+
+    for idx, s in enumerate(sites):
+        if not isinstance(s, dict) or s.get("type") != 1 or _is_protected_douban_home(s):
+            passthrough.append((idx, s))
+            continue
+
+        norm_key = _normalize_cms_domain(s.get("api", ""))
+        if strict_host_only and "::" in norm_key:
+            norm_key = norm_key.split("::", 1)[0]
+        if not norm_key:
+            passthrough.append((idx, s))
+            continue
+
+        lat = _extract_site_latency_ms(s)
+        health = float(s.get("_health_score") or s.get("health_score") or 60.0)
+        score = (lat, -health, idx)
+
+        prev = best_by_norm.get(norm_key)
+        if prev is None or score < prev[0]:
+            best_by_norm[norm_key] = (score, idx, s)
+
+    kept_cms = {idx: item[2] for item in best_by_norm.values()}
+    result = []
+    for idx, s in enumerate(sites):
+        if isinstance(s, dict) and s.get("type") == 1 and not _is_protected_douban_home(s):
+            if idx in kept_cms:
+                result.append(kept_cms[idx])
+        else:
+            result.append(s)
+    return result
+
+
+def _resolve_preferred_gh_proxy_prefix(full_px, lite_px):
+    """从已测速的代理池中提取最优 GitHub 加速前缀（确保以 '/' 结尾）"""
+    for pool in (lite_px, full_px):
+        if isinstance(pool, list) and pool:
+            top = pool[0]
+            if isinstance(top, dict):
+                pref = str(top.get("prefix") or "").strip()
+                if pref.startswith("http"):
+                    return pref if pref.endswith("/") else f"{pref}/"
+    return "https://ghfast.top/"
+
+
+def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branch="main"):
+    """
+    将裸连的 GitHub Raw / GitHub 链接改写为走优选加速代理前缀；
+    若已包含代理前缀或为本地相对路径（./ 或 /），则保持不变。
+    """
+    if not isinstance(val, str):
+        return val
+    s = val.strip()
+    if not s or not s.startswith("http"):
+        return val
+
+    # 跳过已使用加速代理的链接
+    if proxy_prefix and s.startswith(proxy_prefix):
+        return s
+    known_proxies = (
+        "https://ghfast.top/",
+        "https://ghproxy.net/",
+        "https://mirror.ghproxy.com/",
+        "https://gh.api.99988866.xyz/",
+    )
+    if any(s.startswith(kp) for kp in known_proxies) and "raw.githubusercontent.com" in s:
+        if repo_owner_path:
+            s = _ensure_raw_branch_url(s, repo_owner_path, repo_branch)
+        return s
+
+    if "raw.githubusercontent.com/" in s:
+        if repo_owner_path:
+            s = _ensure_raw_branch_url(s, repo_owner_path, repo_branch)
+        # 若原本是 https://raw.githubusercontent.com/...，直接拼上代理前缀
+        if s.startswith("https://raw.githubusercontent.com/") or s.startswith("http://raw.githubusercontent.com/"):
+            return f"{proxy_prefix}{s}"
+        # 若是其他变体，提取 raw.githubusercontent.com/... 之后拼接
+        idx = s.find("raw.githubusercontent.com/")
+        if idx != -1:
+            return f"{proxy_prefix}https://{s[idx:]}"
+
+    if s.startswith("https://github.com/") and "/raw/" in s:
+        return f"{proxy_prefix}{s}"
+
+    return s
+
+
+def _apply_preferred_github_proxy(config_obj, proxy_prefix, repo_owner_path="", repo_branch="main"):
+    """递归遍历配置中的 sites / parses / lives，统一为 GitHub 链接加上优选代理"""
+    if not isinstance(config_obj, dict) or not proxy_prefix:
+        return config_obj
+
+    target_fields = ("jar", "ext", "api", "url")
+
+    def _walk(node):
+        if isinstance(node, dict):
+            for k, v in list(node.items()):
+                if k in target_fields and isinstance(v, str):
+                    node[k] = _rewrite_gh_url_with_proxy(
+                        v, proxy_prefix, repo_owner_path, repo_branch
+                    )
+                elif isinstance(v, (dict, list)):
+                    _walk(v)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    if isinstance(config_obj.get("sites"), list):
+        _walk(config_obj["sites"])
+    if isinstance(config_obj.get("parses"), list):
+        _walk(config_obj["parses"])
+    return config_obj
 
 
 def _prune_dead_discovery_pages(registry, settings):
@@ -509,7 +788,7 @@ def _rebalance_tv_site_tiers(sites, pan_kws, invalid_kws, enrich_top_n=25):
         is_pan = is_pan_site(s, pan_kws, invalid_kws)
         is_special = any(kw in name_str for kw in SPECIAL_SITE_KEYWORDS)
 
-        if "douban" in key_str or "豆瓣" in name_str:
+        if _is_protected_douban_home(s) or "douban" in key_str or "豆瓣" in name_str:
             tier = 1
         elif is_pan:
             tier = 3
@@ -689,6 +968,10 @@ def main():
             + [s for s in dedup_ex if not is_pan_site(s, pan_kws, invalid_kws)]
             + [s for s in dedup_ex if is_pan_site(s, pan_kws, invalid_kws)]
         )
+        merged_raw = _sanitize_sites_with_blacklist(
+            merged_raw, mode="full", extra_dead_hosts=dead_hosts
+        )
+        merged_raw = _dedup_cms_sites_normalized(merged_raw, strict_host_only=False)
         merged = arrange_sites_smart_order(merged_raw, settings, rules)
         merged = _rebalance_tv_site_tiers(
             merged,
@@ -734,17 +1017,19 @@ def main():
                 version_tag=version_tag,
             )
             final_tv = {**final_tv_meta, "sites": strip_internal_meta(merged)}
-            with open("tvbox.json", "w", encoding="utf-8") as f:
-                json.dump(final_tv, f, ensure_ascii=False, indent=2)
 
     if not quality_gate_triggered or not os.path.exists("tvbox_lite.json"):
         lite_tv = build_lite_config(
             final_tv_meta, tag, settings, rules, spider_md5, version_tag=version_tag
         )
         if isinstance(lite_tv.get("sites"), list):
+            lite_sites = _sanitize_sites_with_blacklist(
+                lite_tv["sites"], mode="lite", extra_dead_hosts=dead_hosts
+            )
+            lite_sites = _dedup_cms_sites_normalized(lite_sites, strict_host_only=True)
             lite_tv["sites"] = strip_internal_meta(
                 _rebalance_tv_site_tiers(
-                    lite_tv["sites"],
+                    lite_sites,
                     pan_kws,
                     invalid_kws,
                     enrich_top_n=int(th.get("enrich_cms_filters_top_n", 25)),
@@ -758,15 +1043,13 @@ def main():
         pan_tv = build_pan_only_config(
             final_tv_meta, tag, settings, rules, spider_md5, version_tag=version_tag
         )
+        if isinstance(pan_tv.get("sites"), list):
+            pan_tv["sites"] = _sanitize_sites_with_blacklist(
+                pan_tv["sites"], mode="full", extra_dead_hosts=dead_hosts
+            )
     else:
         with open("tvbox_pan.json", "r", encoding="utf-8") as f:
             pan_tv = json.load(f)
-
-    if not quality_gate_triggered:
-        with open("tvbox_lite.json", "w", encoding="utf-8") as f:
-            json.dump(lite_tv, f, ensure_ascii=False, indent=2)
-        with open("tvbox_pan.json", "w", encoding="utf-8") as f:
-            json.dump(pan_tv, f, ensure_ascii=False, indent=2)
 
     def check_cf(domain):
         d = domain.rstrip("/")
@@ -832,6 +1115,21 @@ def main():
             for k in ("url", "lite_url", "pan_url"):
                 if p.get(k):
                     p[k] = _ensure_raw_branch_url(p[k], repo_owner_path, repo_branch)
+
+    # 统一为配置中的裸连 GitHub 链接加上测速优选代理前缀
+    preferred_gh_proxy = _resolve_preferred_gh_proxy_prefix(full_px, lite_px)
+    for cfg_obj in (final_tv, lite_tv, pan_tv):
+        _apply_preferred_github_proxy(
+            cfg_obj, preferred_gh_proxy, repo_owner_path, repo_branch
+        )
+
+    if not quality_gate_triggered:
+        with open("tvbox.json", "w", encoding="utf-8") as f:
+            json.dump(final_tv, f, ensure_ascii=False, indent=2)
+        with open("tvbox_lite.json", "w", encoding="utf-8") as f:
+            json.dump(lite_tv, f, ensure_ascii=False, indent=2)
+        with open("tvbox_pan.json", "w", encoding="utf-8") as f:
+            json.dump(pan_tv, f, ensure_ascii=False, indent=2)
 
     # 第一屏直达双代理（最速代理精简 + 最速代理网盘）与其余灾备代理分离
     proxy_top_entries, proxy_rest_entries = [], []
