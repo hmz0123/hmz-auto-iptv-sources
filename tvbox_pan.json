@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-11-27 22:52:41 北京时间",
+  "updated_at": "2026-11-28 10:44:01 北京时间",
   "spider": "./custom_spider.jar;md5;15e6a916ed637e3c5dfb75df41d881be",
   "wallpaper": "https://eees.cc",
   "lives": [
     {
       "name": "自动测速精选直播",
       "type": 0,
-      "url": "./tvbox_live.txt?v=20261127",
+      "url": "./tvbox_live.txt?v=20261128",
       "playerType": 2,
       "ua": "okhttp/3.15",
       "epg": "https://epg.112114.xyz/",
@@ -26,7 +26,7 @@
     },
     {
       "key": "Mogg",
-      "name": "木偶哥哥·4K网盘(133ms)",
+      "name": "木偶哥哥·4K网盘(161ms)",
       "type": 3,
       "api": "csp_Wogg",
       "searchable": 1,
@@ -57,6 +57,17 @@
       "ext": "https://www.libvio.pw/"
     },
     {
+      "key": "csp_XYQHikerAL_玩偶哥哥",
+      "name": "📀玩偶哥哥(优)",
+      "type": 3,
+      "api": "csp_XYQHikerAL",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "ext": "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
+      "jar": "./jars/705ba6e23c43.jar;md5;705ba6e23c4384c37a11dd904727520b"
+    },
+    {
       "key": "csp_Netfixtv",
       "name": "💌┃至臻┃影视",
       "type": 3,
@@ -79,30 +90,18 @@
       "quickSearch": 1
     },
     {
-      "key": "玩偶",
-      "name": "👽玩偶哥哥┃4K弹幕",
-      "type": 3,
-      "api": "csp_WoGGGuard",
-      "timeout": 30,
-      "searchable": 1,
-      "quickSearch": 1,
-      "changeable": 0,
-      "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "./jars/4ce29ce27eef.jar;md5;4ce29ce27eeff6a73a230dd92d98ba0c"
-    },
-    {
       "key": "Lib",
-      "name": "🌟┃Lib",
+      "name": "🌟立播",
       "type": 3,
       "api": "csp_Libvio",
       "searchable": 1,
       "quickSearch": 1,
       "changeable": 1,
       "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\"}",
-      "jar": "https://raw.githubusercontent.com/liu673cn/box/main/fty.jar;md5;3d161697458ecbcd2651a749db761ba1"
+      "jar": "./jars/6c4ab3a9d232.jar;md5;6c4ab3a9d232164c75534f9060506ee5"
     },
     {
-      "key": "llb_玩偶",
+      "key": "玩偶",
       "name": "👽玩偶哥哥┃4K弹幕",
       "type": 3,
       "api": "csp_WoGG",
@@ -110,7 +109,7 @@
       "quickSearch": 1,
       "changeable": 0,
       "ext": "{\"Cloud-drive\": \"tvfan/Cloud-drive.txt\", \"from\": \"4k|auto\", \"siteUrl\": \"https://www.wogg.net/\", \"danMu\": \"弹\"}",
-      "jar": "https://raw.githubusercontent.com/liu673cn/box/main/fty.jar;md5;3d161697458ecbcd2651a749db761ba1"
+      "jar": "./jars/6c4ab3a9d232.jar;md5;6c4ab3a9d232164c75534f9060506ee5"
     },
     {
       "key": "MV_vod",
@@ -126,15 +125,36 @@
       "ext": ""
     },
     {
-      "key": "csp_XYQHikerAL_玩偶哥哥",
-      "name": "📀玩偶哥哥(优)",
+      "key": "fm_csp_Duopan",
+      "name": "🖍︎┃蜡笔┃影视",
+      "type": 3,
+      "api": "csp_Duopan",
+      "filterable": 1,
+      "ext": "{\"site_urls\": [\"http://xiaocge.fun\", \"http://feimo.fun\", \"http://www.labi88.sbs\", \"http://fmao.site\", \"http://fmao.shop\", \"http://xiaocgege.shop\", \"http://www.xiaocgege.shop\"], \"threadinfo\": {\"chunksize\": 512, \"threads\": 16}, \"url_key\": \"Duopan2\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
+      "jar": "https://img2.gelonghui.com/library/3f9b9-de4a5d2c-7fea-4d70-8a85-79be6c379621.png;md5;3f9b9cac793a3e9b818131c8a7208800",
+      "quickSearch": 1
+    },
+    {
+      "key": "玩偶哥哥",
+      "name": "测┃玩偶┃哥哥",
       "type": 3,
       "api": "csp_XYQHikerAL",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1,
-      "ext": "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQHiker/玩偶哥哥.json",
-      "jar": "https://raw.githubusercontent.com/gaotianliuyun/gao/master/jar/XYQ.jar;md5;705ba6e23c4384c37a11dd904727520b"
+      "ext": "http://rihou.vip:55/lib/玩偶哥哥.json",
+      "jar": "http://rihou.vip:55/lib/ttkx.jar;md5;c253e1930a210fa5141e5418f1f90949"
+    },
+    {
+      "key": "玩偶运输车",
+      "name": "测┃玩偶┃运输",
+      "type": 3,
+      "api": "csp_XYQHikerAL",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "ext": "http://rihou.vip:55/lib/玩偶运输车.json",
+      "jar": "http://rihou.vip:55/lib/ttkx.jar;md5;c253e1930a210fa5141e5418f1f90949"
     },
     {
       "key": "csp_WoGG1",
@@ -145,29 +165,24 @@
       "changeable": 0,
       "ext": "{\"token\": \"影視天下第一\", \"filter\": \"https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/wogg.json\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
       "jar": "https://gh-proxy.com/github.com/FongMi/CatVodSpider/raw/main/jar/custom_spider.jar",
-      "quickSearch": 1
-    },
-    {
-      "key": "fm_csp_Duopan",
-      "name": "🖍︎┃蜡笔┃影视",
-      "type": 3,
-      "api": "csp_Duopan",
-      "filterable": 1,
-      "ext": "{\"site_urls\": [\"http://xiaocge.fun\", \"http://feimo.fun\", \"http://www.labi88.sbs\", \"http://fmao.site\", \"http://fmao.shop\", \"http://xiaocgege.shop\", \"http://www.xiaocgege.shop\"], \"threadinfo\": {\"chunksize\": 512, \"threads\": 16}, \"url_key\": \"Duopan2\", \"Cloud-drive\": \"tvfan/Cloud-drive.txt\"}",
-      "jar": "https://img2.gelonghui.com/library/3f9b9-de4a5d2c-7fea-4d70-8a85-79be6c379621.png;md5;3f9b9cac793a3e9b818131c8a7208800",
-      "quickSearch": 1
+      "quickSearch": 0
     }
   ],
   "parses": [
     {
+      "name": "CK",
+      "type": 0,
+      "url": "https://www.ckplayer.vip/jiexi/?url="
+    },
+    {
+      "name": "虾米",
+      "type": 0,
+      "url": "https://jx.xmflv.com/?url="
+    },
+    {
       "name": "盘古",
       "type": 0,
       "url": "http://www.pangujiexi.cc/jiexi.php?url="
-    },
-    {
-      "name": "okjx",
-      "type": 0,
-      "url": "https://okjx.cc/?url="
     },
     {
       "name": "m3u8-sstv",
@@ -180,24 +195,19 @@
       "url": "https://bd.jx.cn/?url="
     },
     {
+      "name": "BL",
+      "type": 0,
+      "url": "https://vip.bljiex.com/?v="
+    },
+    {
+      "name": "okjx",
+      "type": 0,
+      "url": "https://okjx.cc/?url="
+    },
+    {
       "name": "影探Z",
       "type": 0,
       "url": "https://jx.777jiexi.com/player/?url="
-    },
-    {
-      "name": "虾米",
-      "type": 0,
-      "url": "https://jx.xmflv.com/?url="
-    },
-    {
-      "name": "CK",
-      "type": 0,
-      "url": "https://www.ckplayer.vip/jiexi/?url="
-    },
-    {
-      "name": "m3u8-jx",
-      "type": 0,
-      "url": "https://jx.m3u8.tv/jiexi/?url="
     }
   ],
   "flags": [
@@ -376,6 +386,8 @@
     }
   ],
   "ads": [
+    "mozai.4gtv.tv",
+    "pv.vipwm.cc",
     "static-mozai.4gtv.tv"
   ]
 }
