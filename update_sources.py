@@ -19,8 +19,10 @@ from core.builder import (
     build_pan_only_config,
     ensure_standard_refs,
     filter_and_sort_parses,
+    generate_static_home_feed,
     is_douban_home_site,
     rank_pan_spider_sites,
+    speedtest_cms_segments,
     strip_internal_meta,
     write_actions_summary,
 )
@@ -209,7 +211,6 @@ ALLOWED_LIVE_SCHEMES = (
 
 
 def _normalize_live_genre(raw_genre):
-    """剥离直播分组中的 Emoji 与装饰性符号，并归一化常见同义分组"""
     cleaned = re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_/&]+", "", str(raw_genre or "")).strip()
     if cleaned in LIVE_GENRE_ALIAS_MAP:
         return LIVE_GENRE_ALIAS_MAP[cleaned]
@@ -219,25 +220,18 @@ def _normalize_live_genre(raw_genre):
 
 
 def _sanitize_live_stream_url(raw_url):
-    """清洗直播流地址尾部的引号、HTML实体、字面量转义符、行内#多源及水印参数"""
     if not raw_url:
         return ""
     url = str(raw_url).strip()
-
-    # 1. 解码 HTML 实体（如 &amp; -> &）并剔除残留的 &quot; / &quot
     url = html.unescape(url)
     url = re.sub(r"&quot;?", "", url, flags=re.IGNORECASE)
-
-    # 2. 清除文本中直接残留的字面量转义符（如 \r\n）及首尾残留引号/控制字符
     url = url.replace("\\r", "").replace("\\n", "").replace("\\t", "")
     url = url.strip("\"'`,; \t\r\n\x00-\x1f\x7f")
     if not url:
         return ""
 
-    # 3. 兼容并清理行内 # 拼接的冗余多源后缀（保留第一条合法流地址）
     parts = [p.strip("\"'`,; \t\r\n\x00-\x1f\x7f") for p in url.split("#") if p.strip()]
     for part in parts:
-        # 剔除常见的公众号推广尾部参数
         part = re.sub(r"\?%E5%85%B3%E6%B3%A8%E5%BE%AE.*$", "", part)
         part = re.sub(r"[?&]zzhed\??$", "", part, flags=re.IGNORECASE)
         part = part.rstrip("?")
@@ -253,12 +247,6 @@ def _sanitize_live_stream_url(raw_url):
 
 
 def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
-    """
-    对生成的 tvbox_live.txt 执行后置标准化清洗：
-      1. 合并带 Emoji 与不带 Emoji 的重复 #genre# 分类（及春晚、4K测试等冗余分组）
-      2. 净化频道 URL 尾部的多余双引号、HTML实体、行内#多源拼接与 \\r\\n 脏字符
-      3. 过滤推广/广告杂项频道，并在同分组内按 (频道名, 净化后URL) 精确去重
-    """
     if not os.path.exists(filepath):
         return fallback_count
 
@@ -278,12 +266,9 @@ def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
         stripped = line.strip()
         if not stripped:
             continue
-
-        # 保留文件顶部的元信息注释行（如更新时间统计）
         if not seen_first_genre and stripped.startswith("#"):
             header_comments.append(stripped)
             continue
-
         if stripped.endswith(",#genre#"):
             seen_first_genre = True
             raw_g = stripped[: -len(",#genre#")]
@@ -291,7 +276,6 @@ def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
             grouped_channels.setdefault(current_genre, [])
             seen_in_group.setdefault(current_genre, set())
             continue
-
         if "," in stripped and "://" in stripped:
             seen_first_genre = True
             ch_name, raw_u = stripped.split(",", 1)
@@ -302,11 +286,9 @@ def _post_sanitize_tvbox_live_txt(filepath="tvbox_live.txt", fallback_count=0):
                 or any(sub in ch_name for sub in LIVE_JUNK_CHANNEL_SUBSTRINGS)
             ):
                 continue
-
             clean_u = _sanitize_live_stream_url(raw_u)
             if not clean_u:
                 continue
-
             grouped_channels.setdefault(current_genre, [])
             seen_in_group.setdefault(current_genre, set())
             dedup_key = (ch_name, clean_u)
@@ -353,10 +335,6 @@ def _parse_iso_ts(ts_str):
 
 
 def _ensure_raw_branch_url(url, repo_path, branch="main"):
-    """
-    兜底修正：确保 raw.githubusercontent.com/<owner>/<repo>/ 后包含分支名（如 /main/），
-    避免代理转发时因缺少分支名导致 400/404。
-    """
     if not url or not repo_path:
         return url
     prefix_marker = f"raw.githubusercontent.com/{repo_path}/"
@@ -367,10 +345,6 @@ def _ensure_raw_branch_url(url, repo_path, branch="main"):
 
 
 def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
-    """
-    1. 黑名单域名/关键词过滤（含自建豆瓣推荐首页白名单保护）
-    2. 精简版（mode='lite'）额外剔除裸连私有 IP:端口源并收敛冗余玩偶系源
-    """
     if not isinstance(sites, list):
         return []
 
@@ -444,7 +418,6 @@ def _sanitize_sites_with_blacklist(sites, mode="full", extra_dead_hosts=()):
 
 
 def _normalize_cms_domain(api_url):
-    """提取 CMS 接口归一化主域名，用于合并同一采集站的 XML/JSON 或多子域重复项"""
     raw = str(api_url or "").strip()
     if not raw:
         return ""
@@ -478,10 +451,6 @@ def _normalize_cms_domain(api_url):
 
 
 def _dedup_cms_sites_normalized(sites, strict_host_only=False):
-    """
-    CMS 采集源接口归一化去重：
-    对 type == 1 的标准 CMS 采集站按归一化主域名归并，优先保留延迟最低、健康分最高的条目。
-    """
     if not isinstance(sites, list) or not sites:
         return sites
 
@@ -496,9 +465,10 @@ def _dedup_cms_sites_normalized(sites, strict_host_only=False):
         if not norm_key:
             continue
 
+        spd = float(s.get("_seg_speed_kbs", 0) or 0)
         lat = _extract_site_latency_ms(s)
         health = float(s.get("_health_score") or s.get("health_score") or 60.0)
-        score = (lat, -health, idx)
+        score = (spd <= 0, -spd, lat, -health, idx)
 
         prev = best_by_norm.get(norm_key)
         if prev is None or score < prev[0]:
@@ -516,7 +486,6 @@ def _dedup_cms_sites_normalized(sites, strict_host_only=False):
 
 
 def _resolve_preferred_gh_proxy_prefix(full_px, lite_px):
-    """从已测速的代理池中提取最优 GitHub 加速前缀（确保以 '/' 结尾）"""
     for pool in (lite_px, full_px):
         if isinstance(pool, list) and pool:
             top = pool[0]
@@ -528,10 +497,6 @@ def _resolve_preferred_gh_proxy_prefix(full_px, lite_px):
 
 
 def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branch="main"):
-    """
-    将裸连的 GitHub Raw / GitHub 链接改写为走优选加速代理前缀；
-    若已包含代理前缀或为本地相对路径（./ 或 /），则保持不变。
-    """
     if not isinstance(val, str):
         return val
     s = val.strip()
@@ -568,7 +533,6 @@ def _rewrite_gh_url_with_proxy(val, proxy_prefix, repo_owner_path="", repo_branc
 
 
 def _apply_preferred_github_proxy(config_obj, proxy_prefix, repo_owner_path="", repo_branch="main"):
-    """递归遍历配置中的 sites / parses，统一为 GitHub 链接加上优选代理"""
     if not isinstance(config_obj, dict) or not proxy_prefix:
         return config_obj
 
@@ -595,11 +559,6 @@ def _apply_preferred_github_proxy(config_obj, proxy_prefix, repo_owner_path="", 
 
 
 def _prune_dead_discovery_pages(registry, settings):
-    """
-    预检 discovery_pages 可用性：
-    - 返回 404/410 的非种子页直接拉黑入 purged_seeds；
-    - 连续失败达到 max_discovered_fail_streak 的发现页自动剔除并拉黑，避免反复报错。
-    """
     pages = registry.get("discovery_pages", [])
     if not isinstance(pages, list) or not pages:
         return []
@@ -687,13 +646,6 @@ def _prune_dead_discovery_pages(registry, settings):
 
 
 def _purge_dead_seeds_and_update_tracker(registry, settings, now_iso):
-    """
-    维护每个源的 first_fail_at 连续失败起点：
-    - 若 fail_streak == 0，清空 first_fail_at；
-    - 若 fail_streak > 0 且无 first_fail_at，记录当前时间；
-    - 若 fail_streak >= 15 且首次失败距今 >= 15 天，彻底物理删除，
-      并把 URL 写入 registry['purged_seeds'] 防止下次从 seeds.json 回流。
-    """
     reg_cfg = settings.get("registry", {})
     max_streak = int(reg_cfg.get("purge_seed_fail_streak", 15))
     max_days = float(reg_cfg.get("purge_seed_fail_days", 15))
@@ -740,7 +692,6 @@ def _purge_dead_seeds_and_update_tracker(registry, settings, now_iso):
 
 
 def _filter_purged_seeds(seeds, registry):
-    """过滤掉已打入 purged_seeds 黑名单或含空格的脏种子链接"""
     purged = set(registry.get("purged_seeds", []))
     cleaned = dict(seeds)
     for list_key in ("discovery_pages", "live_source_urls", "extra_vod_urls"):
@@ -774,7 +725,6 @@ def _filter_purged_seeds(seeds, registry):
 
 
 def _snapshot_prev_counts(settings, pan_keywords, invalid_keywords):
-    """在覆盖写出新文件前，快照上一版成品与源仓数量以便简报对比增减"""
     prev = {}
     try:
         if os.path.exists("tvbox.json"):
@@ -826,10 +776,9 @@ def _snapshot_prev_counts(settings, pan_keywords, invalid_keywords):
 
 
 def _extract_site_latency_ms(site):
-    """从站点元数据或名称括号中解析响应延迟(ms)"""
-    for k in ("_latency", "_src_latency", "latency"):
+    for k in ("_seg_ttfb_ms", "_latency", "_src_latency", "latency"):
         v = site.get(k)
-        if isinstance(v, (int, float)) and v > 0:
+        if isinstance(v, (int, float)) and 0 < v < 9000:
             return int(v)
     m = re.search(r"\((\d{1,4})\s*ms\)", str(site.get("name", "")))
     if m:
@@ -838,10 +787,6 @@ def _extract_site_latency_ms(site):
 
 
 def _enrich_top_cms_categories_and_filters(sites, top_n=25):
-    """
-    复用 test_and_dedup_cms 探活阶段缓存的 _raw_classes 原始分类列表，
-    为前 top_n 个标准 CMS(type=1) 站点零网络请求映射一级分类与四维筛选。
-    """
     applied = 0
     for s in sites:
         if applied >= top_n:
@@ -885,23 +830,23 @@ def _enrich_top_cms_categories_and_filters(sites, top_n=25):
 
 def _rebalance_tv_site_tiers(sites, settings, pan_kws, invalid_kws, enrich_top_n=25):
     """
-    电视端黄金梯队重排 + 统一聚搜(quickSearch)配额分配：
-      T1: 唯一自建豆瓣推荐首页置顶
-      T2: 优质快速直连站（按延迟/速度与健康分综合排序）
-      T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌等，紧接直连站方便看4K原盘）
+    电视端黄金梯队重排 + 统一聚搜(quickSearch)配额分配（尊重真实分片下载速度）：
+      T1: 唯一自建多分类聚搜首页置顶
+      T2: 优质快速直连站（优先真分片下载通畅的高速源）
+      T3: 优质网盘站（玩偶、木偶、蜡笔、至臻、欧歌、立播等）
       T4: 普通存活直连站
-      T5: 动漫 / 短剧 / 体育 / 听书等垂直专项站（放列表尾部避免干扰日常选片）
-    重排后统一为前 quick_search_top_n 个站点分配 quickSearch=1，避免顺序与聚搜错位。
+      T5: 动漫 / 短剧 / 体育 / 听书等垂直专项站
     """
     if not isinstance(sites, list) or not sites:
         return sites
 
-    qs_top_n = int(settings.get("pinned", {}).get("quick_search_top_n", 12))
+    qs_top_n = int(settings.get("pinned", {}).get("quick_search_top_n", 22))
     indexed = list(enumerate(sites))
 
     def _tier_sort_key(pair):
         idx, s = pair
         name_str = str(s.get("name", ""))
+        spd = float(s.get("_seg_speed_kbs", 0) or 0)
         lat = _extract_site_latency_ms(s)
         health = float(s.get("_health_score") or s.get("health_score") or 60.0)
         is_pan = is_pan_site(s, pan_kws, invalid_kws)
@@ -913,19 +858,19 @@ def _rebalance_tv_site_tiers(sites, settings, pan_kws, invalid_kws, enrich_top_n
             tier = 3
         elif is_special:
             tier = 5
-        elif s.get("type") == 1 or s.get("_is_priority") or lat <= 450:
+        elif spd > 0 or s.get("type") == 1 or s.get("_is_priority") or lat <= 450:
             tier = 2
         else:
             tier = 4
 
-        return (tier, lat, -health, idx)
+        return (tier, spd <= 0, -spd, lat, -health, idx)
 
     reordered = [s for _, s in sorted(indexed, key=_tier_sort_key)]
     _enrich_top_cms_categories_and_filters(reordered, top_n=enrich_top_n)
 
     for idx, s in enumerate(reordered):
         if not is_douban_home_site(s):
-            s["quickSearch"] = 1 if idx < qs_top_n else 0
+            s["quickSearch"] = 1 if idx <= qs_top_n else 0
     return reordered
 
 
@@ -1011,7 +956,7 @@ def main():
     min_pan_sites = int(th.get("min_quality_gate_pan_sites", 3))
     max_extra_spider_full = int(th.get("max_full_extra_spider_sites", 250))
 
-    jar_stats, quality_gate_triggered = (0, 0, 0), False
+    jar_stats, quality_gate_triggered, home_cnt = (0, 0, 0), False, 0
     if len(val_cms) < min_valid_cms and os.path.exists("tvbox.json"):
         quality_gate_triggered = True
         alerts.append(
@@ -1026,7 +971,7 @@ def main():
             )
         final_tv = dict(final_tv_meta)
     else:
-        douban = build_douban_site()
+        douban = build_douban_site(settings=settings, version_tag=version_tag)
         cms_sites = [
             {
                 "key": i["key"],
@@ -1044,10 +989,17 @@ def main():
             for i in val_cms
         ]
 
+        cms_sites = speedtest_cms_segments(
+            cms_sites,
+            top_n=int(th.get("cms_segment_speedtest_top_n", 18)),
+            workers=16,
+        )
+        home_cnt = generate_static_home_feed(cms_sites, settings, output_path="home.json")
+
         seen_keys, seen_sigs, base_sites = set(), set(), []
 
         def reg_site(s, allow_rename=True):
-            if is_douban_home_site(s) and s.get("key") != "douban_rank":
+            if is_douban_home_site(s) and s.get("key") != "hmz_home_hub":
                 return False
             k = str(s.get("key", "")).strip()
             ext_sig = (
@@ -1071,7 +1023,7 @@ def main():
         if reg_site(douban, allow_rename=False):
             base_sites.append(douban)
         for s in cms_sites + rank_pan_spider_sites(
-            seeds.get("pan_spider_sites", []), verify_ext_top_n=10
+            seeds.get("pan_spider_sites", []), verify_ext_top_n=25
         ):
             if reg_site(s, allow_rename=True):
                 base_sites.append(s)
@@ -1099,7 +1051,7 @@ def main():
             merged_raw, mode="full", extra_dead_hosts=dead_hosts
         )
         merged_raw = _dedup_cms_sites_normalized(merged_raw, strict_host_only=False)
-        merged = arrange_sites_smart_order(merged_raw, settings, rules)
+        merged = arrange_sites_smart_order(merged_raw, settings, rules, version_tag=version_tag)
         merged = _rebalance_tv_site_tiers(
             merged,
             settings,
@@ -1212,20 +1164,20 @@ def main():
             trio = [
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox_lite.json", version_tag),
-                    "name": f"⚡CF精简{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                    "name": f"⚡CF精简{healthy_idx} ({c['lat']}ms)",
                 },
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox_pan.json", version_tag),
-                    "name": f"💎CF网盘{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                    "name": f"💎CF网盘{healthy_idx} ({c['lat']}ms)",
                 },
                 {
                     "url": append_cache_buster(f"{c['base']}/tvbox.json", version_tag),
-                    "name": f"👑CF全量{healthy_idx} [{c['host']}] ({c['lat']}ms)",
+                    "name": f"👑CF全量{healthy_idx} ({c['lat']}ms)",
                 },
             ]
             if healthy_idx == 1:
                 cf_primary_entries.extend(trio)
-            else:
+            elif healthy_idx == 2:
                 cf_backup_entries.extend(trio)
         else:
             cf_failed_entries.append(
@@ -1245,7 +1197,6 @@ def main():
                 if p.get(k):
                     p[k] = _ensure_raw_branch_url(p[k], repo_owner_path, repo_branch)
 
-    # 统一为配置中的裸连 GitHub 链接加上测速优选代理前缀
     preferred_gh_proxy = _resolve_preferred_gh_proxy_prefix(full_px, lite_px)
     for cfg_obj in (final_tv, lite_tv, pan_tv):
         _apply_preferred_github_proxy(
@@ -1260,7 +1211,6 @@ def main():
         with open("tvbox_pan.json", "w", encoding="utf-8") as f:
             json.dump(pan_tv, f, ensure_ascii=False, indent=2)
 
-    # 第一屏直达双代理（最速代理精简 + 最速代理网盘）与其余灾备代理分离
     proxy_top_entries, proxy_rest_entries = [], []
     if lite_px:
         top1 = lite_px[0]
@@ -1286,7 +1236,7 @@ def main():
                 "url": append_cache_buster(p["lite_url"], version_tag),
                 "name": p["lite_name"],
             }
-            for p in lite_px
+            for p in lite_px[:2]
             if p.get("lite_url")
         ]
         + [
@@ -1294,7 +1244,7 @@ def main():
                 "url": append_cache_buster(p["pan_url"], version_tag),
                 "name": p["pan_name"],
             }
-            for p in lite_px
+            for p in lite_px[:2]
             if p.get("pan_url")
         ]
         + [
@@ -1302,7 +1252,7 @@ def main():
                 "url": append_cache_buster(p["url"], version_tag),
                 "name": p["name"],
             }
-            for p in full_px
+            for p in full_px[:2]
             if p.get("url")
         ]
     ):
@@ -1327,16 +1277,16 @@ def main():
                 "url": append_cache_buster(
                     f"{fastest_cf['base']}/tvbox_cf_abs.json", version_tag
                 ),
-                "name": f"🛡️CF应急绝对路径 [{fastest_cf['host']}] ({fastest_cf['lat']}ms)",
+                "name": f"🛡️CF应急线路 ({fastest_cf['lat']}ms)",
             }
         )
 
     proxy_pool_for_abs = lite_px or full_px
     for idx_abs, (fp, out_fname, label_prefix) in enumerate(
         zip(
-            proxy_pool_for_abs[:2],
-            ("tvbox_proxy_abs.json", "tvbox_proxy_abs2.json"),
-            ("🛡️代理应急主线", "🛡️代理应急备线"),
+            proxy_pool_for_abs[:1],
+            ("tvbox_proxy_abs.json",),
+            ("🛡️代理应急主线",),
         ),
         1,
     ):
@@ -1356,18 +1306,17 @@ def main():
                 "url": append_cache_buster(
                     f"{raw_base}/{out_fname}", version_tag
                 ),
-                "name": f"{label_prefix}{idx_abs} [标{fp['discovery_order']}] ({fp['latency']}ms)",
+                "name": f"{label_prefix} ({fp['latency']}ms)",
             }
         )
 
-    # 电视遥控器第一屏黄金顺序：主推CF1(精简/网盘/全量) -> 最速双代理 -> 应急绝对路径 -> 备用CF2~4 -> 其余灾备代理
     dc_urls = (
         cf_primary_entries
         + proxy_top_entries
         + fallback_entries
         + cf_backup_entries
         + proxy_rest_entries
-        + cf_failed_entries
+        + cf_failed_entries[:1]
     )
 
     if dc_urls:
@@ -1392,10 +1341,11 @@ def main():
         registry,
         alerts,
         prev_counts=prev_counts,
+        home_cnt=home_cnt,
     )
     print(
-        f"完成！全量 {len(final_tv['sites'])} 站 / 精简 {len(lite_tv['sites'])} 站 / "
-        f"网盘 {len(pan_tv['sites'])} 站 / 直播 {live_cnt} 条"
+        f"完成！首页 {home_cnt} 部 / 全量 {len(final_tv['sites'])} 站 / "
+        f"精简 {len(lite_tv['sites'])} 站 / 网盘 {len(pan_tv['sites'])} 站 / 直播 {live_cnt} 条"
     )
 
 
