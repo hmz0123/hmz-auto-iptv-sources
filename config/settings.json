@@ -1,5 +1,6 @@
 {
   "repo_owner_path": "hmz0123/hmz-auto-iptv-sources",
+  "repo_branch": "main",
   "cache_dir": "cache",
   "jars_dir": "jars",
   "max_mirror_jar_bytes": 2621440,
@@ -23,30 +24,33 @@
     "max_workers": 24,
     "cms_workers": 18,
     "min_valid_live_channels": 20,
-    "min_live_slice_speed_kbs": 150,
-    "max_streams_per_channel": 6,
+    "min_live_slice_speed_kbs": 220,
+    "drop_slow_live_streams": true,
+    "max_streams_per_channel": 5,
     "max_live_channels": 1500,
     "min_valid_cms_sites": 5,
     "max_cms_sites": 90,
+    "cms_segment_speedtest_top_n": 18,
+    "enrich_cms_filters_top_n": 25,
     "min_quality_gate_full_sites": 30,
     "min_quality_gate_pan_sites": 3
   },
   "editions": {
     "lite_max_source_latency": 1200,
     "lite_max_cms_latency": 650,
-    "lite_max_cms_sites": 18,
-    "lite_max_pan_sites": 25,
-    "lite_max_extra_spider_sites": 25,
-    "lite_cms_speedtest_top_n": 16,
-    "lite_min_seg_speed_kbs": 150,
-    "pan_edition_max_sites": 80,
-    "pan_quick_search_top_n": 12
+    "lite_max_cms_sites": 16,
+    "lite_max_pan_sites": 18,
+    "lite_max_extra_spider_sites": 16,
+    "lite_cms_speedtest_top_n": 14,
+    "lite_min_seg_speed_kbs": 180,
+    "pan_edition_max_sites": 60,
+    "pan_quick_search_top_n": 20
   },
   "pinned": {
     "home_prefer_cms_keywords": ["索尼", "非凡", "量子", "暴风", "360"],
     "cms_keywords": ["索尼", "非凡", "量子", "暴风", "360", "ikun", "极速", "豪华", "红牛", "光速"],
-    "pan_keywords": ["玩偶", "木偶", "wogg", "mogg", "至臻", "蜡笔", "二小", "欧歌", "libvio"],
-    "quick_search_top_n": 12
+    "pan_keywords": ["玩偶", "木偶", "wogg", "mogg", "至臻", "蜡笔", "二小", "欧歌", "libvio", "立播"],
+    "quick_search_top_n": 22
   },
   "registry": {
     "file": "source_registry.json",
