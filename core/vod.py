@@ -252,7 +252,8 @@ def save_source_registry(registry, tag, settings):
                 continue
             if origin == "seed" and streak >= purge_streak:
                 continue
-            kept.append(it)
+            cleaned_it = {k: v for k, v in it.items() if not k.startswith("_")}
+            kept.append(cleaned_it)
         kept.sort(
             key=lambda x: (
                 int(x.get("fail_streak", 0)),
@@ -960,6 +961,7 @@ def _is_recently_healthy_cms(item, now_ts):
 def test_and_dedup_cms(cms_map, settings):
     """
     并发测速 CMS 接口 + 历史健康度（EMA）自适应加权 + 增量快速探活 + 指纹合并镜像站
+    （探活同时缓存 _raw_classes 原始分类列表，免去后续重复 ac=list 请求）
     """
     th = settings.get("thresholds", {})
     timeout = int(th.get("timeout", 5))
@@ -985,19 +987,25 @@ def test_and_dedup_cms(cms_map, settings):
                     data = parse_json_lenient(stripped)
                     if isinstance(data, dict) and (data.get("list") or data.get("class")):
                         classes = data.get("class") or []
-                        live_cats = [
-                            str(c.get("type_name", "")).strip()
+                        valid_raw_classes = [
+                            {
+                                "type_id": str(c.get("type_id", "")).strip(),
+                                "type_name": str(c.get("type_name", "")).strip(),
+                            }
                             for c in classes
-                            if isinstance(c, dict) and c.get("type_name")
+                            if isinstance(c, dict)
+                            and str(c.get("type_id", "")).strip()
+                            and str(c.get("type_name", "")).strip()
                         ]
+                        live_cats = [c["type_name"] for c in valid_raw_classes]
                         if live_cats:
                             site["categories"] = list(
                                 dict.fromkeys(list(site.get("categories") or []) + live_cats)
                             )
+                        site["_raw_classes"] = valid_raw_classes
                         cls_sig = ",".join(
-                            f"{c.get('type_id')}:{c.get('type_name', '')}"
-                            for c in classes[:15]
-                            if isinstance(c, dict)
+                            f"{c['type_id']}:{c['type_name']}"
+                            for c in valid_raw_classes[:15]
                         )
                         titles = "|".join(
                             str(x.get("vod_name", ""))[:16]
