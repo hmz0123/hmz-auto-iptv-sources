@@ -29,13 +29,72 @@ BUILTIN_PROXY_RADAR_URLS = [
 
 DEFAULT_CLOUD_DRIVE_PATH = "tvfan/Cloud-drive.txt"
 
+# 6大黄金标准分类（彻底剔除短剧/短片，适配客厅大屏观影）
 HOME_CATEGORY_SPECS = [
-    ("1", "热门电影", ("电影", "动作片", "喜剧片", "科幻片", "爱情片", "剧情片")),
-    ("2", "热播剧集", ("电视剧", "国产剧", "连续剧", "欧美剧", "韩剧", "港剧")),
-    ("3", "王牌综艺", ("综艺", "大陆综艺", "港台综艺", "日韩综艺")),
-    ("4", "高分动漫", ("动漫", "国产动漫", "日韩动漫", "动画")),
-    ("5", "精选短剧", ("短剧", "爽剧", "微短剧")),
+    ("1", "热门电影", ("电影", "动作片", "喜剧片", "科幻片", "爱情片", "剧情片", "悬疑片", "战争片")),
+    ("2", "热播剧集", ("电视剧", "国产剧", "连续剧", "欧美剧", "日韩剧", "韩剧", "港剧", "台剧")),
+    ("3", "4K蓝光", ("4K", "4k", "蓝光", "杜比", "臻彩")),
+    ("4", "高分动漫", ("动漫", "国产动漫", "日韩动漫", "欧美动漫", "动画")),
+    ("5", "王牌综艺", ("综艺", "大陆综艺", "港台综艺", "日韩综艺", "欧美综艺")),
+    ("6", "精品纪录片", ("纪录片", "记录片", "探索", "自然", "历史")),
 ]
+
+# 采集站标准分类白名单顺序（遥控器第一屏直达核心分类，自动屏蔽短剧/伦理/解说）
+PREFERRED_CMS_CATEGORIES = [
+    "电影",
+    "电视剧",
+    "4K电影",
+    "4K剧集",
+    "4K蓝光",
+    "国产剧",
+    "欧美剧",
+    "日韩剧",
+    "港台剧",
+    "动作片",
+    "科幻片",
+    "悬疑片",
+    "喜剧片",
+    "爱情片",
+    "剧情片",
+    "动漫",
+    "国产动漫",
+    "日韩动漫",
+    "欧美动漫",
+    "综艺",
+    "大陆综艺",
+    "日韩综艺",
+    "港台综艺",
+    "纪录片",
+    "记录片",
+]
+
+# 首页严格屏蔽短剧、擦边、预告及低质刷屏词
+HOME_BLOCKED_KEYWORDS = (
+    "短剧",
+    "爽剧",
+    "微短剧",
+    "短片",
+    "解说",
+    "预告",
+    "花絮",
+    "伦理",
+    "福利",
+    "写真",
+    "里番",
+    "理论",
+    "午夜",
+    "擦边",
+    "重生之",
+    "离婚后",
+    "霸总",
+    "战神",
+    "龙王",
+    "医圣",
+    "神豪",
+    "闪婚",
+    "娇宠",
+    "白眼狼",
+)
 
 CLEAN_TITLE_NOISE_RE = re.compile(
     r"[\[\(（【](?:4k|2160p?|1080p?|720p?|hd|bd|tc|ts|抢先版?|枪版|国语|粤语|中字|双字|完结|更新至\d+集?|全\d+集?)[\]\)）】]",
@@ -55,11 +114,45 @@ def _clean_vod_title_for_search(raw_title):
     return title
 
 
+def _is_blocked_home_vod(vod_name, type_name="", remarks=""):
+    blob = f"{vod_name} {type_name} {remarks}".lower()
+    if any(k.lower() in blob for k in HOME_BLOCKED_KEYWORDS):
+        return True
+    # 过滤集数异常夸张（如全80集~120集）的典型竖屏微短剧
+    m = re.search(r"全(\d+)集", str(remarks))
+    if m and int(m.group(1)) >= 65 and "动漫" not in blob and "动画" not in blob:
+        return True
+    return False
+
+
+def _filter_cms_site_categories(site):
+    """精简并规范化 type: 1 采集站的 categories，隐藏短剧/伦理等杂乱标签"""
+    sc = dict(site)
+    if sc.get("type") != 1:
+        return sc
+    raw_cats = sc.get("categories")
+    if isinstance(raw_cats, list) and raw_cats:
+        filtered = [
+            c for c in raw_cats
+            if isinstance(c, str) and not any(bk in c for bk in ("短剧", "短片", "伦理", "福利", "理论", "解说", "里番", "写真"))
+        ]
+        # 按偏好顺序重排已有分类
+        ordered = [c for c in PREFERRED_CMS_CATEGORIES if c in filtered]
+        rest = [c for c in filtered if c not in ordered]
+        merged = ordered + rest
+        if merged:
+            sc["categories"] = merged[:18]
+    else:
+        sc["categories"] = list(PREFERRED_CMS_CATEGORIES[:15])
+    return sc
+
+
 def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
     """
-    从真实测速通畅的前排直连 CMS 站聚合热门片单生成静态 home.json：
-    - 零外部 JAR 依赖，首屏秒开永不空白
-    - 不写入有效播放地址，TVBox 家族客户端点击海报自动触发全网聚搜
+    从真实测速通畅的前排直连 CMS 站聚合热门片单生成纯净版静态 home.json：
+    - 彻底剔除短剧/短片/伦理低质内容，覆盖 电影/电视剧/4K蓝光/动漫/综艺/纪录片 六大核心领域
+    - 不输出静态 class 数组，确保 TVBox / OK影视PRO / 影视仓 / NEWBOX 全客户端首屏展示完全一致
+    - 点击任意海报自动触发全网并发聚搜
     """
     repo_owner_path = settings.get("repo_owner_path", "hmz0123/hmz-auto-iptv-sources").strip("/")
     repo_branch = settings.get("repo_branch", "main").strip("/")
@@ -68,12 +161,16 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
         if isinstance(s, dict)
         and s.get("type") == 1
         and str(s.get("api", "")).startswith(("http://", "https://"))
-    ][:8]
+    ][:12]
 
+    # 每个大类最多采集 8 部，最终混排输出 36 部左右高质量海报
+    per_bucket_cap = 8
     buckets = {cid: [] for cid, _, _ in HOME_CATEGORY_SPECS}
     seen_titles = set()
 
     for site in candidates:
+        if all(len(buckets[cid]) >= per_bucket_cap for cid in buckets):
+            break
         base_api = re.sub(r"[?&]ac=list.*", "", str(site.get("api", "")).rstrip("/"))
         sep = "&" if "?" in base_api else "?"
         raw_classes = site.get("_raw_classes") or []
@@ -85,6 +182,8 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
             t_name = str(item.get("type_name", "")).strip()
             if not t_id or not t_name:
                 continue
+            if any(bk in t_name for bk in HOME_BLOCKED_KEYWORDS):
+                continue
             for cid, _, aliases in HOME_CATEGORY_SPECS:
                 if cid not in cat_id_map and any(a == t_name or a in t_name for a in aliases):
                     cat_id_map[cid] = t_id
@@ -92,7 +191,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
 
         fetch_targets = list(cat_id_map.items()) if cat_id_map else [("1", "")]
         for cid, remote_tid in fetch_targets:
-            if len(buckets[cid]) >= 15:
+            if len(buckets[cid]) >= per_bucket_cap:
                 continue
             q_url = f"{base_api}{sep}ac=detail&pg=1" + (f"&t={urllib.parse.quote(remote_tid)}" if remote_tid else "")
             try:
@@ -104,40 +203,50 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
                 for v in items:
                     if not isinstance(v, dict):
                         continue
-                    clean_name = _clean_vod_title_for_search(v.get("vod_name", ""))
+                    raw_vname = str(v.get("vod_name", "")).strip()
+                    type_lbl = str(v.get("type_name", "")).strip()
+                    remark = str(v.get("vod_remarks", "")).strip()
+
+                    if _is_blocked_home_vod(raw_vname, type_lbl, remark):
+                        continue
+
+                    clean_name = _clean_vod_title_for_search(raw_vname)
                     pic = str(v.get("vod_pic", "")).strip()
                     if not clean_name or len(clean_name) < 2 or not pic.startswith(("http://", "https://")):
                         continue
                     if clean_name in seen_titles:
                         continue
-                    seen_titles.add(clean_name)
 
                     target_cid = cid
                     if not cat_id_map:
-                        type_lbl = str(v.get("type_name", ""))
+                        matched = False
                         for c_id, _, aliases in HOME_CATEGORY_SPECS:
                             if any(a in type_lbl for a in aliases):
                                 target_cid = c_id
+                                matched = True
                                 break
-                    if len(buckets[target_cid]) >= 15:
+                        if not matched:
+                            continue
+
+                    if len(buckets[target_cid]) >= per_bucket_cap:
                         continue
 
+                    seen_titles.add(clean_name)
                     cat_name = next((cname for c_id, cname, _ in HOME_CATEGORY_SPECS if c_id == target_cid), "热门推荐")
-                    remark = str(v.get("vod_remarks", "")).strip()
                     year = str(v.get("vod_year", "")).strip()
                     area = str(v.get("vod_area", "")).strip()
                     blurb = re.sub(r"<[^>]+>", "", str(v.get("vod_content", "") or v.get("vod_blurb", ""))).strip()[:120]
 
                     buckets[target_cid].append({
                         "vod_id": f"hmz_{len(seen_titles)}",
-                        "type_id": int(target_cid),
+                        "type_id": 1,
                         "type_name": cat_name,
                         "vod_name": clean_name,
                         "vod_pic": pic,
-                        "vod_remarks": f"{remark} · 点片名全网搜" if remark else "点击片名全网搜源",
+                        "vod_remarks": f"[{cat_name}] {remark}" if remark else f"[{cat_name}] 点击全网搜源",
                         "vod_year": year,
                         "vod_area": area,
-                        "vod_content": blurb or f"《{clean_name}》聚合推荐，点击立即全网搜索4K网盘与极速直连线路。",
+                        "vod_content": blurb or f"《{clean_name}》精选推荐，点击立即全网搜索4K网盘与极速直连线路。",
                         "vod_play_from": "",
                         "vod_play_url": "",
                     })
@@ -169,7 +278,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
                 "type_name": "热门电影",
                 "vod_name": "庆余年",
                 "vod_pic": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2907693868.jpg",
-                "vod_remarks": "点击右上角搜索或点片名搜全网",
+                "vod_remarks": "[热播剧集] 点击片名全网搜源",
                 "vod_year": "2024",
                 "vod_area": "大陆",
                 "vod_content": "自动聚合全网4K网盘与极速直连线路。",
@@ -178,6 +287,7 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
             }
         ]
 
+    # 移除静态 class 字段，使 TVBox / OK影视 / 影视仓 / NEWBOX 均直接渲染纯海报推荐大厅
     home_payload = {
         "code": 1,
         "msg": "数据列表",
@@ -186,17 +296,13 @@ def generate_static_home_feed(cms_sites, settings, output_path="home.json"):
         "limit": len(interleaved),
         "total": len(interleaved),
         "home_source_url": f"{GH_RAW}/{repo_owner_path}/{repo_branch}/{output_path}",
-        "class": [
-            {"type_id": cid, "type_name": cname}
-            for cid, cname, _ in HOME_CATEGORY_SPECS
-        ],
-        "list": interleaved[:100],
+        "list": interleaved[:48],
     }
 
     try:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(home_payload, f, ensure_ascii=False, indent=2)
-        print(f"自建多分类聚搜首页生成完成：{output_path} 共 {len(home_payload['list'])} 部精选影片")
+        print(f"自建纯净聚搜首页生成完成：{output_path} 共 {len(home_payload['list'])} 部精选影视（已剔除短剧）")
     except Exception as e:
         print(f"写入 {output_path} 失败: {e}")
 
@@ -259,7 +365,7 @@ def is_douban_home_site(site):
     name = str(site.get("name", "")).strip()
     api = str(site.get("api", "")).strip().lower()
     return (
-        k in ("hmz_home_hub", "douban_rank", "douban", "豆瓣")
+        k in ("hmz_home_hub", "hmz_douban_filter", "douban_rank", "douban", "豆瓣")
         or api == "csp_douban"
         or api.endswith("/home.json")
         or "祝您观影愉快" in name
@@ -269,9 +375,7 @@ def is_douban_home_site(site):
 
 def build_douban_site(settings=None, abs_base_prefix=None, version_tag=""):
     """
-    唯一自建多分类聚搜首页（所有配置共用）：
-    - 零外部 JAR 依赖，毫秒级渲染海报墙
-    - 点片名自动触发全网后台源并发聚搜
+    第 1 位：自建纯海报聚搜首页（所有客户端全兼容，零依赖秒开）
     """
     cfg = settings or {}
     repo_owner_path = cfg.get("repo_owner_path", "hmz0123/hmz-auto-iptv-sources").strip("/")
@@ -291,6 +395,22 @@ def build_douban_site(settings=None, abs_base_prefix=None, version_tag=""):
         "searchable": 0,
         "quickSearch": 0,
         "filterable": 0,
+        "changeable": 0,
+    }
+
+
+def build_douban_filter_site():
+    """
+    第 2 位：内置豆瓣片库筛选源（承担全网“按类型/地区/年代/排序”多维筛选，选片后自动全网搜源播放）
+    """
+    return {
+        "key": "hmz_douban_filter",
+        "name": "🔍豆瓣片库·按地区年代筛选",
+        "type": 3,
+        "api": "csp_Douban",
+        "searchable": 0,
+        "quickSearch": 0,
+        "filterable": 1,
         "changeable": 0,
     }
 
@@ -464,9 +584,10 @@ def _match_keywords(site, keywords):
 
 def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     """
-    自建聚搜首页置顶（唯一） + 分层黄金前排：
-    - 第 1 位：自建多分类聚搜首页
-    - 第 2 位起：置顶网盘站 -> 真分片测速通畅采集站 -> 其余常规站
+    黄金前排编排：
+    - 第 1 位：自建纯海报聚搜首页（今日热播·点击全网搜源）
+    - 第 2 位：内置豆瓣片库筛选源（支持按地区/年代/类型多维筛选）
+    - 第 3 位起：置顶网盘站 -> 真分片测速通畅采集站（已精简分类） -> 其余常规站
     """
     pinned_cfg = settings.get("pinned", {})
     home_kws = pinned_cfg.get("home_prefer_cms_keywords", [])
@@ -475,11 +596,16 @@ def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
     qs_top_n = int(pinned_cfg.get("quick_search_top_n", 22))
 
-    douban = [build_douban_site(settings=settings, version_tag=version_tag)]
+    top_hubs = [
+        build_douban_site(settings=settings, version_tag=version_tag),
+        build_douban_filter_site(),
+    ]
     others = [s for s in sites if not is_douban_home_site(s)]
 
     cms_candidates = [
-        s for s in others if s.get("type") in (0, 1) and not is_pan_site(s, pan_kws, invalid_kws)
+        _filter_cms_site_categories(s)
+        for s in others
+        if s.get("type") in (0, 1) and not is_pan_site(s, pan_kws, invalid_kws)
     ]
     pan_candidates = [
         _normalize_pan_site_ext(s) for s in others if is_pan_site(s, pan_kws, invalid_kws)
@@ -523,7 +649,7 @@ def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     tail_cms = cms_sorted[8:]
 
     ordered = (
-        douban
+        top_hubs
         + top_pan
         + top_cms
         + spider_other
@@ -535,7 +661,7 @@ def arrange_sites_smart_order(sites, settings, rules, version_tag=""):
     for idx, item in enumerate(ordered):
         sc = dict(item)
         if not is_douban_home_site(sc):
-            sc["quickSearch"] = 1 if idx <= qs_top_n else 0
+            sc["quickSearch"] = 1 if idx <= (qs_top_n + 1) else 0
         final_ordered.append(sc)
     return final_ordered
 
@@ -761,7 +887,7 @@ def filter_and_sort_parses(parses):
 
 
 def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", version_tag=""):
-    """生成精简版 tvbox_lite.json（共用自建聚搜首页 + 复用真实分片测速 + 过滤成人/敏感站点）"""
+    """生成精简版 tvbox_lite.json（共用自建聚搜首页 + 豆瓣筛选 + 复用真实分片测速 + 过滤成人/敏感站点）"""
     ed = settings.get("editions", {})
     pan_kws = settings.get("pinned", {}).get("pan_keywords", rules.get("pan_keywords", []))
     invalid_kws = tuple(rules.get("junk_keywords", [])) + DEFAULT_DEAD_OR_JUNK_WORDS
@@ -852,7 +978,7 @@ def build_lite_config(full_tv_with_meta, tag, settings, rules, spider_md5="", ve
     final_cms = speed_passed_cms if len(speed_passed_cms) >= 5 else probed_cms
 
     ordered_sites = arrange_sites_smart_order(
-        [build_douban_site(settings=settings, version_tag=version_tag)] + fast_other + final_cms + fast_pan,
+        fast_other + final_cms + fast_pan,
         settings,
         rules,
         version_tag=version_tag,
@@ -909,7 +1035,11 @@ def build_pan_only_config(full_tv_with_meta, tag, settings, rules, spider_md5=""
             "wallpaper": full_tv_with_meta.get("wallpaper", "https://eees.cc"),
             "lives": full_tv_with_meta.get("lives", []),
             "sites": strip_internal_meta(
-                [build_douban_site(settings=settings, version_tag=version_tag)] + graded
+                [
+                    build_douban_site(settings=settings, version_tag=version_tag),
+                    build_douban_filter_site(),
+                ]
+                + graded
             ),
             "parses": full_tv_with_meta.get("parses", [])[:8],
             "flags": full_tv_with_meta.get("flags", []),
@@ -929,7 +1059,7 @@ def build_absolute_fallback_config(
     abs_sites = []
     for s in base_tv.get("sites", []):
         item = dict(s)
-        if is_douban_home_site(item):
+        if item.get("key") == "hmz_home_hub":
             item = build_douban_site(
                 settings=settings,
                 abs_base_prefix=clean_base,
@@ -1225,10 +1355,10 @@ def write_actions_summary(
         md = (
             f"### 📺 TVBox 自动更新健康简报 ({tag})\n\n"
             f"| 指标 | 数值 |\n| :--- | :--- |\n"
-            f"| 统一聚搜首页 (`home.json`) | **{home_cnt}** 部精选影视（三端共用，点击片名自动全网聚搜） |\n"
+            f"| 统一聚搜首页 (`home.json`) | **{home_cnt}** 部精选影视（已剔除短剧，六大核心分类混排） |\n"
             f"| 全量版 (`tvbox.json`) | **{full_cnt}** 站{_fmt_delta(full_cnt, prev.get('full'))}（含网盘 **{pan_cnt}** 站{_fmt_delta(pan_cnt, prev.get('pan_in_full'))}） |\n"
-            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（统一首页 + 真分片测速 + 纯净过滤） |\n"
-            f"| 网盘专版 (`tvbox_pan.json`) | **{pan_only_cnt}** 站{_fmt_delta(pan_only_cnt, prev.get('pan_only'))}（统一首页 + 高并发网盘聚搜） |\n"
+            f"| 精简版 (`tvbox_lite.json`) | **{lite_cnt}** 站{_fmt_delta(lite_cnt, prev.get('lite'))}（统一首页 + 豆瓣筛选 + 真分片测速） |\n"
+            f"| 网盘专版 (`tvbox_pan.json`) | **{pan_only_cnt}** 站{_fmt_delta(pan_only_cnt, prev.get('pan_only'))}（统一首页 + 豆瓣筛选 + 并发网盘） |\n"
             f"| 精选直播 (`tvbox_live.txt`) | **{live_cnt}** 条{_fmt_delta(live_cnt, prev.get('live'))} |\n"
             f"| JAR 本地镜像 | **{jar_stats[2]}** 个（总存活 {jar_stats[0]}，剔除死链 {jar_stats[1]}） |\n"
             f"| 多仓入口 (`dc.json`) | **{dc_cnt}** 条 |\n"
