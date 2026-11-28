@@ -1,64 +1,64 @@
 {
   "urls": [
     {
-      "url": "https://tv.hmz0123.eu.cc/tvbox_lite.json?v=20261128",
-      "name": "⚡CF精简1 (336ms)"
-    },
-    {
-      "url": "https://tv.hmz0123.eu.cc/tvbox_pan.json?v=20261128",
-      "name": "💎CF网盘1 (336ms)"
-    },
-    {
-      "url": "https://tv.hmz0123.eu.cc/tvbox.json?v=20261128",
-      "name": "👑CF全量1 (336ms)"
-    },
-    {
-      "url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json?v=20261128",
-      "name": "⚡代理精简1 ✅409ms·786KB/s"
-    },
-    {
-      "url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json?v=20261128",
-      "name": "💎代理网盘1 ✅409ms·786KB/s"
-    },
-    {
-      "url": "https://tv.hmz0123.eu.cc/tvbox_cf_abs.json?v=20261128",
-      "name": "🛡️CF应急线路 (336ms)"
-    },
-    {
-      "url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_proxy_abs.json?v=20261128",
-      "name": "🛡️代理应急主线 (409ms)"
-    },
-    {
-      "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_proxy_abs2.json?v=20261128",
-      "name": "🛡️代理应急备线 (413ms)"
-    },
-    {
       "url": "https://tv.wlglb.dpdns.org/tvbox_lite.json?v=20261128",
-      "name": "⚡CF精简2 (338ms)"
+      "name": "⚡CF精简1 (341ms)"
     },
     {
       "url": "https://tv.wlglb.dpdns.org/tvbox_pan.json?v=20261128",
-      "name": "💎CF网盘2 (338ms)"
+      "name": "💎CF网盘1 (341ms)"
     },
     {
       "url": "https://tv.wlglb.dpdns.org/tvbox.json?v=20261128",
-      "name": "👑CF全量2 (338ms)"
+      "name": "👑CF全量1 (341ms)"
+    },
+    {
+      "url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json?v=20261128",
+      "name": "⚡代理精简5 ✅376ms·906KB/s"
+    },
+    {
+      "url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json?v=20261128",
+      "name": "💎代理网盘5 ✅376ms·906KB/s"
+    },
+    {
+      "url": "https://tv.wlglb.dpdns.org/tvbox_cf_abs.json?v=20261128",
+      "name": "🛡️CF应急线路 (341ms)"
+    },
+    {
+      "url": "https://gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_proxy_abs.json?v=20261128",
+      "name": "🛡️代理应急主线 (376ms)"
+    },
+    {
+      "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_proxy_abs2.json?v=20261128",
+      "name": "🛡️代理应急备线 (377ms)"
+    },
+    {
+      "url": "https://tv.xzgd.cc.cd/tvbox_lite.json?v=20261128",
+      "name": "⚡CF精简2 (342ms)"
+    },
+    {
+      "url": "https://tv.xzgd.cc.cd/tvbox_pan.json?v=20261128",
+      "name": "💎CF网盘2 (342ms)"
+    },
+    {
+      "url": "https://tv.xzgd.cc.cd/tvbox.json?v=20261128",
+      "name": "👑CF全量2 (342ms)"
     },
     {
       "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_lite.json?v=20261128",
-      "name": "⚡代理精简2 ✅413ms·929KB/s"
+      "name": "⚡代理精简2 ✅377ms·1591KB/s"
     },
     {
       "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox_pan.json?v=20261128",
-      "name": "💎代理网盘2 ✅413ms·929KB/s"
+      "name": "💎代理网盘2 ✅377ms·1591KB/s"
     },
     {
       "url": "https://gh-proxy.com/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json?v=20261128",
-      "name": "🚀代理全量1 ✅409ms·786KB/s"
+      "name": "🚀代理全量1 ✅377ms·933KB/s"
     },
     {
       "url": "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/hmz0123/hmz-auto-iptv-sources/main/tvbox.json?v=20261128",
-      "name": "🚀代理全量2 ✅413ms·929KB/s"
+      "name": "🚀代理全量2 ✅377ms·1591KB/s"
     }
   ]
 }
