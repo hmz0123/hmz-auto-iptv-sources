@@ -4,7 +4,8 @@
     "防失联", "备用网址", "推送", "本地", "请勿相信", "验证码", "口令",
     "验证", "解锁", "扫码", "广告", "赌博", "博彩", "澳门", "威尼斯", "彩票", "棋牌",
     "接口失效", "已失效", "失效", "维护中", "暂停服务", "已停用", "下线",
-    "跑马灯", "测试线路", "暂不可用", "域名更换", "防屏蔽", "鸡"
+    "跑马灯", "测试线路", "暂不可用", "域名更换", "防屏蔽", "鸡",
+    "永远免费", "live2vod", "yj1211"
   ],
   "lite_only_adult_keywords": [
     "福利", "伦理", "写真", "美女", "涩", "色", "成人", "午夜", "里番",
@@ -14,11 +15,15 @@
   "pan_keywords": [
     "盘", "阿里", "夸克", "uc", "天翼", "移动云", "迅雷", "115", "123", "百度",
     "玩偶", "木偶", "至臻", "蜡笔", "闪电", "欧歌", "二小", "肥猫",
-    "wogg", "quark", "ali", "yiso", "pansou", "pansearch", "zhaozy", "yun"
+    "wogg", "mogg", "quark", "ali", "yiso", "pansou", "pansearch", "zhaozy", "yun"
   ],
   "dead_proxy_hosts": [
     "ghp.ci",
     "gh.halonice.com",
-    "mirror.ghproxy.com"
+    "mirror.ghproxy.com",
+    "agit.ai",
+    "voflix.me",
+    "wogg.xxooo.cf",
+    "rihou.vip"
   ]
 }
