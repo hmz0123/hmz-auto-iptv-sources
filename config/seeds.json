@@ -41,7 +41,6 @@
     "https://raw.githubusercontent.com/gaotianliuyun/gao/master/9918.json",
     "https://raw.githubusercontent.com/2hacc/TVBox/main/dc.json",
     "https://raw.githubusercontent.com/q215613905/TVBoxOS/main/api.json",
-    "https://www.agit.ai/Yoursmile7/TVBox/raw/branch/master/XC.json",
     "http://rihou.cc:55/lib/kx2024.txt"
   ],
   "tvbox_vod_groups": [
@@ -115,8 +114,7 @@
       "name": "香雅情",
       "keywords": ["香雅情", "xyq"],
       "urls": [
-        "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQ.json",
-        "https://gh-proxy.com/https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQ.json"
+        "https://raw.githubusercontent.com/gaotianliuyun/gao/master/XYQ.json"
       ]
     },
     {
@@ -124,8 +122,7 @@
       "name": "老刘备",
       "keywords": ["老刘备", "liubei"],
       "urls": [
-        "https://raw.githubusercontent.com/liu673cn/box/main/m.json",
-        "https://gh-proxy.com/https://raw.githubusercontent.com/liu673cn/box/main/m.json"
+        "https://raw.githubusercontent.com/liu673cn/box/main/m.json"
       ]
     },
     {
@@ -188,7 +185,6 @@
   "cms_api_list": [
     { "key": "bfzy", "name": "暴风资源", "api": "https://bfzyapi.com/api.php/provide/vod/" },
     { "key": "lzzy", "name": "量子资源", "api": "https://cj.lziapi.com/api.php/provide/vod/" },
-    { "key": "xfzy", "name": "新飞资源", "api": "https://api.ffzyapi.com/api.php/provide/vod" },
     { "key": "ffzy", "name": "非凡资源", "api": "https://cj.ffzyapi.com/api.php/provide/vod/" },
     { "key": "snzy", "name": "索尼资源", "api": "https://suoniapi.com/api.php/provide/vod/" },
     { "key": "sdzy", "name": "闪电资源", "api": "https://sdzyapi.com/api.php/provide/vod/" },
@@ -212,7 +208,7 @@
       "quickSearch": 1,
       "filterable": 1,
       "changeable": 1,
-      "ext": "https://wogg.xxooo.cf/"
+      "ext": "https://wogg.888484.xyz/"
     },
     {
       "key": "Mogg",
@@ -237,11 +233,10 @@
     }
   ],
   "proxy_candidates": [
+    "https://ghfast.top/",
     "https://gh-proxy.com/",
     "https://cdn.gh-proxy.org/",
     "https://gh.qsd.onl/",
-    "https://ghfast.top/",
-    "https://mirror.ghproxy.com/",
     "https://ghproxy.net/",
     "https://github.moeyy.xyz/",
     "https://ghps.cc/",
